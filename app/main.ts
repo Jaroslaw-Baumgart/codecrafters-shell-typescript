@@ -10,7 +10,7 @@ const rl = createInterface({
 rl.prompt();
 rl.on("line", (line: string) => {
   const trimmedLine = line.trim();
-  console.log(`{${trimmedLine}}: command not found`);
+  console.log(`${trimmedLine}: command not found`);
   rl.prompt();
 });
 //codecrafters submit
