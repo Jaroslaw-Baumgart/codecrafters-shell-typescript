@@ -9,7 +9,8 @@ const rl = createInterface({
 // TODO: Uncomment the code below to pass the first stage
 rl.prompt();
 rl.on("line", (line: string) => {
-  console.log(`{${line}}: command not found`);
+  const trimmedLine = line.trim();
+  console.log(`{${trimmedLine}}: command not found`);
   rl.prompt();
 });
 //codecrafters submit
