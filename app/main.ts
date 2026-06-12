@@ -32,6 +32,10 @@ rl.on("line", (line: string) =>{
           console.log("echo is a shell builtin");
           rl.prompt();
           break;
+        case "type":
+          console.log("type is a shell builtin");
+          rl.prompt();
+          break;
         default:
           console.log(`${args[0]}: not found`);
           rl.prompt();
