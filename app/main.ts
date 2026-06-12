@@ -22,6 +22,22 @@ rl.on("line", (line: string) =>{
       console.log(args.join(" "));  
       rl.prompt();
       break;
+    case "type":
+      switch (args[0]) {
+        case "exit":
+          console.log("exit is a shell builtin");
+          rl.prompt();
+          break;
+        case "echo":
+          console.log("echo is a shell builtin");
+          rl.prompt();
+          break;
+        default:
+          console.log(`${args[0]}: not found`);
+          rl.prompt();
+      }
+      break;
+      rl.prompt();
     default:
       console.log(`${command}: command not found`);
       rl.prompt();
