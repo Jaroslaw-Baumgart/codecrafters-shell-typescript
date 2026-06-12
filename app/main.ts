@@ -7,15 +7,24 @@ const rl = createInterface({
 });
 
 // TODO: Uncomment the code below to pass the first stage
+
+
 rl.prompt();
-rl.on("line", (line: string) => {
+rl.on("line", (line: string) =>{
   const trimmedLine = line.trim();
-  if (trimmedLine === "exit") {
-    rl.close();
-    return;
-  } else {
-    console.log(`${trimmedLine}: command not found`);
-    rl.prompt();
+  const [command, ...args] = trimmedLine.split(" ");
+
+  switch (command) {
+    case "exit":
+      rl.close();
+      break;
+    case "echo":
+      console.log(args.join(" "));  
+      rl.prompt();
+      break;
+    default:
+      console.log(`${command}: command not found`);
+      rl.prompt();
   }
 });
 //codecrafters submit
