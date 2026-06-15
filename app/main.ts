@@ -19,6 +19,7 @@ const builtins = new Map<string, BuiltinHandler>([
   ["echo", handleEcho],
   ["type", handleType],
   ["pwd", handlePwd],
+  ["cd", handleCd],
 ]); 
 
 function handleExit(args: string[]): void {
@@ -74,6 +75,21 @@ function handlePwd(args: string[]): void {
   console.log(process.cwd());
   rl.prompt();
 }
+
+function handleCd(args: string[]): void{
+
+  const directory = args[0].trim();
+  //console.log(args[0]);
+
+  try {
+    process.chdir(directory);
+  } catch {
+    console.log(`cd: ${directory}: No such file or directory`);
+  }
+
+  rl.prompt();
+}
+
 
 function handleExternalCommand(command: string, args: string[]): void {
   const executablePath = findExecutableInPath(command);
