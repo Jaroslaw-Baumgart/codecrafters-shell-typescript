@@ -78,8 +78,12 @@ function handlePwd(args: string[]): void {
 
 function handleCd(args: string[]): void{
 
-  const directory = args[0].trim();
+  let directory = args[0].trim();
   //console.log(args[0]);
+
+  if (directory === "~") {
+    directory = process.env.HOME ?? "";
+  }
 
   try {
     process.chdir(directory);
