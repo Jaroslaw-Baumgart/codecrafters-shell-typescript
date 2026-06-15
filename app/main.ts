@@ -18,6 +18,7 @@ const builtins = new Map<string, BuiltinHandler>([
   ["exit", handleExit],
   ["echo", handleEcho],
   ["type", handleType],
+  ["pwd", handlePwd],
 ]); 
 
 function handleExit(args: string[]): void {
@@ -69,6 +70,11 @@ function findExecutableInPath(command: string): string | null {
   return null;
 }
 
+function handlePwd(args: string[]): void {
+  console.log(process.cwd());
+  rl.prompt();
+}
+
 function handleExternalCommand(command: string, args: string[]): void {
   const executablePath = findExecutableInPath(command);
 
@@ -89,6 +95,12 @@ function handleExternalCommand(command: string, args: string[]): void {
 rl.prompt();
 rl.on("line", (line: string) =>{
   const trimmedLine = line.trim();
+
+  if (!trimmedLine) {
+    rl.prompt();
+    return;
+  }
+
   const [command, ...args] = trimmedLine.split(" ");
   //console.log({ command, args });
   const handler = builtins.get(command);
