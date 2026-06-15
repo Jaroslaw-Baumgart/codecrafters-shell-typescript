@@ -1,6 +1,7 @@
 import { createInterface } from "readline";
 import fs from "fs";
 import path from "path";
+import { spawnSync } from "child_process";
 
 const rl = createInterface({
   input: process.stdin,
@@ -68,6 +69,22 @@ function findExecutableInPath(command: string): string | null {
   return null;
 }
 
+function handleExternalCommand(command: string, args: string[]): void {
+  const executablePath = findExecutableInPath(command);
+
+  if (!executablePath) {
+    console.log(`${command}: command not found`);
+    rl.prompt();
+    return;
+  }
+
+  spawnSync(executablePath, args, {
+    stdio: "inherit",
+  });
+
+  rl.prompt();
+}
+
 
 rl.prompt();
 rl.on("line", (line: string) =>{
@@ -78,8 +95,7 @@ rl.on("line", (line: string) =>{
   if (handler) {
     handler(args);
   } else {
-    console.log(`${command}: command not found`);
-    rl.prompt();
+    handleExternalCommand(command, args);
   }
 });
 
