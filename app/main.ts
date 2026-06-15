@@ -78,7 +78,7 @@ function handleExternalCommand(command: string, args: string[]): void {
     return;
   }
 
-  spawnSync(executablePath, args, {
+  spawnSync(command, args, {
     stdio: "inherit",
   });
 
