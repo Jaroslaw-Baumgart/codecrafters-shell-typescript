@@ -115,16 +115,22 @@ function parseArgs(line: string): string[] {
   const args: string[] = [];
   let current = "";
   let inSingleQuotes = false;
+  let inDoubleQuotes = false;
   let currentStarted = false;
 
   for (const char of line) {
-    if (char === "'"){
+    if (char === "'" && !inDoubleQuotes){
       inSingleQuotes = !inSingleQuotes;
       currentStarted = true;
       continue;
     }
+    if (char === '"' && !inSingleQuotes){
+      inDoubleQuotes = !inDoubleQuotes;
+      currentStarted = true;
+      continue;
+    }
 
-    if (/\s/.test(char) && !inSingleQuotes) {
+    if (/\s/.test(char) && !inSingleQuotes && !inDoubleQuotes) {
       if (currentStarted){
         args.push(current);
         current = "";
