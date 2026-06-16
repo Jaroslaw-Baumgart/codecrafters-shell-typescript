@@ -111,23 +111,57 @@ function handleExternalCommand(command: string, args: string[]): void {
   rl.prompt();
 }
 
+function parseArgs(line: string): string[] {
+  const args: string[] = [];
+  let current = "";
+  let inSingleQuotes = false;
+  let currentStarted = false;
+
+  for (const char of line) {
+    if (char === "'"){
+      inSingleQuotes = !inSingleQuotes;
+      currentStarted = true;
+      continue;
+    }
+
+    if (/\s/.test(char) && !inSingleQuotes) {
+      if (currentStarted){
+        args.push(current);
+        current = "";
+        currentStarted = false;
+      }
+      continue;
+    }
+
+    current += char;
+    currentStarted = true;
+  }
+
+  if (currentStarted) {
+    args.push(current);
+  }
+
+  return args;
+}
+
+
 
 rl.prompt();
 rl.on("line", (line: string) =>{
-  const trimmedLine = line.trim();
+  const args = parseArgs(line);
+  const command = args[0];
+  const commandArgs = args.slice(1);
 
-  if (!trimmedLine) {
+  if (!command) {
     rl.prompt();
     return;
   }
 
-  const [command, ...args] = trimmedLine.split(" ");
-  //console.log({ command, args });
   const handler = builtins.get(command);
   if (handler) {
-    handler(args);
+    handler(commandArgs);
   } else {
-    handleExternalCommand(command, args);
+    handleExternalCommand(command, commandArgs);
   }
 });
 
