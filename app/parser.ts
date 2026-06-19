@@ -66,15 +66,30 @@ export function parseArgs(line: string): string[] {
     }
 
     if (state === "doubleQuoted") {
-      if (char === '"') {
-        state = "normal";
-        currentStarted = true;
-        continue;
-      }
-
-      current += char;
+    if (char === '"') {
+      state = "normal";
       currentStarted = true;
       continue;
+    }
+
+    if (char === "\\") {
+      const nextChar = line[i + 1];
+
+      if (nextChar === '"' || nextChar === "\\") {
+        current += nextChar;
+        currentStarted = true;
+        i++;
+      } else {
+        current += "\\";
+        currentStarted = true;
+      }
+
+      continue;
+    }
+
+    current += char;
+    currentStarted = true;
+    continue;
     }
   }
 
