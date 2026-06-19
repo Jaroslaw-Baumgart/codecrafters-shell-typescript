@@ -23,6 +23,12 @@ export function createBuiltins(context: BuiltinContext): Map<string, BuiltinHand
   builtins.set("type", (args: string[]) => {
     const [name] = args;
 
+    if (!name) {
+      console.log("type: missing operand");
+      context.prompt();
+      return;
+    }
+
     if (builtins.has(name)) {
       console.log(`${name} is a shell builtin`);
       context.prompt();
@@ -46,16 +52,17 @@ export function createBuiltins(context: BuiltinContext): Map<string, BuiltinHand
   });
 
   builtins.set("cd", (args: string[]) => {
-    let directory = args[0]?.trim() ?? "";
+    const directory = args[0] ?? "";
 
-    if (directory === "~") {
-      directory = process.env.HOME ?? "";
+    let target = directory;
+    if (target === "~") {
+      target = process.env.HOME ?? "";
     }
 
     try {
-      process.chdir(directory);
+      process.chdir(target);
     } catch {
-      console.log(`cd: ${directory}: No such file or directory`);
+      console.log(`cd: ${target}: No such file or directory`);
     }
 
     context.prompt();

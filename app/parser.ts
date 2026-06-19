@@ -1,39 +1,81 @@
+type ParserState = "normal" | "singleQuoted" | "doubleQuoted";
+
 export function parseArgs(line: string): string[] {
   const args: string[] = [];
   let current = "";
-  let inSingleQuotes = false;
-  let inDoubleQuotes = false;
   let currentStarted = false;
-  let escaping = false;
+  let state: ParserState = "normal";
 
-  for (const char of line) {
-    if (char === "'" && !inDoubleQuotes){
-      inSingleQuotes = !inSingleQuotes;
-      currentStarted = true;
-      continue;
-    }
-    if (char === '"' && !inSingleQuotes){
-      inDoubleQuotes = !inDoubleQuotes;
-      currentStarted = true;
-      continue;
-    }
-    if (char === '\\' && !inSingleQuotes && !inDoubleQuotes){
-      escaping = true;
-      currentStarted = true;
-      continue;
-    }
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
 
-    if (/\s/.test(char) && !inSingleQuotes && !inDoubleQuotes) {
-      if (currentStarted){
-        args.push(current);
-        current = "";
-        currentStarted = false;
+    if (state === "normal") {
+      if (char === "\\"){
+        const nextChar = line[i +1];
+
+        if (nextChar !== undefined) {
+          current += nextChar;
+          currentStarted = true;
+          i++;
+        } else {
+          current += "\\";
+          currentStarted = true;
+        }
+
+        continue;
       }
+
+      if (char === "'") {
+        state = "singleQuoted";
+        currentStarted = true;
+        continue;
+      }
+
+      if (char === '"') {
+        state = "doubleQuoted";
+        currentStarted = true;
+        continue;
+      }
+
+      if (/\s/.test(char)) {
+        if (currentStarted) {
+          args.push(current);
+          current = "";
+          currentStarted = false;
+        }
+
+        continue;
+
+      }
+
+      current += char;
+      currentStarted = true;
       continue;
     }
 
-    current += char;
-    currentStarted = true;
+    if (state === "singleQuoted") {
+      if (char === "'") {
+        state = "normal";
+        currentStarted = true;
+        continue;
+      }
+
+      current += char;
+      currentStarted = true;
+      continue;
+    }
+
+    if (state === "doubleQuoted") {
+      if (char === '"') {
+        state = "normal";
+        currentStarted = true;
+        continue;
+      }
+
+      current += char;
+      currentStarted = true;
+      continue;
+    }
   }
 
   if (currentStarted) {

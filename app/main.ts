@@ -1,7 +1,7 @@
-import { spawnSync } from "child_process";
 import { createInterface } from "readline";
-import { createBuiltins, findExecutableInPath } from "./builtins";
+import { spawnSync } from "child_process";
 import { parseArgs } from "./parser";
+import { createBuiltins, findExecutableInPath } from "./builtins";
 
 const rl = createInterface({
   input: process.stdin,
@@ -30,8 +30,15 @@ function handleExternalCommand(command: string, args: string[]): void {
   rl.prompt();
 }
 
-rl.prompt();
+// TODO: Uncomment the code below to pass the first stage
 
+
+
+
+
+
+
+rl.prompt();
 rl.on("line", (line: string) => {
   const args = parseArgs(line);
   const command = args[0];
@@ -43,10 +50,11 @@ rl.on("line", (line: string) => {
   }
 
   const handler = builtins.get(command);
-
   if (handler) {
     handler(commandArgs);
   } else {
     handleExternalCommand(command, commandArgs);
   }
 });
+
+//codecrafters submit
