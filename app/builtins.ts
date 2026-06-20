@@ -1,11 +1,10 @@
-import fs from "fs";
-import path from "path";
+import { findExecutableInPath } from "./externalCommands";
+import type { OutputWriter } from "./output";
 
-export type BuiltinHandler = (args: string[]) => void;
+export type BuiltinHandler = (args: string[], output: OutputWriter) => void;
 
 interface BuiltinContext {
   close: () => void;
-  prompt: () => void;
 }
 
 export function createBuiltins(context: BuiltinContext): Map<string, BuiltinHandler> {
@@ -15,43 +14,37 @@ export function createBuiltins(context: BuiltinContext): Map<string, BuiltinHand
     context.close();
   });
 
-  builtins.set("echo", (args: string[]) => {
-    console.log(args.join(" "));
-    context.prompt();
+  builtins.set("echo", (args, output) => {
+    output.writeLine(args.join(" "));
   });
 
-  builtins.set("type", (args: string[]) => {
+  builtins.set("type", (args, output) => {
     const [name] = args;
 
     if (!name) {
       console.log("type: missing operand");
-      context.prompt();
       return;
     }
 
     if (builtins.has(name)) {
-      console.log(`${name} is a shell builtin`);
-      context.prompt();
+      output.writeLine(`${name} is a shell builtin`);
       return;
     }
 
     const executablePath = findExecutableInPath(name);
 
     if (executablePath) {
-      console.log(`${name} is ${executablePath}`);
+      output.writeLine(`${name} is ${executablePath}`);
     } else {
-      console.log(`${name}: not found`);
+      output.writeLine(`${name}: not found`);
     }
-
-    context.prompt();
   });
 
-  builtins.set("pwd", () => {
-    console.log(process.cwd());
-    context.prompt();
+  builtins.set("pwd", (_args, output) => {
+    output.writeLine(process.cwd());
   });
 
-  builtins.set("cd", (args: string[]) => {
+  builtins.set("cd", (args) => {
     const directory = args[0] ?? "";
 
     let target = directory;
@@ -64,26 +57,8 @@ export function createBuiltins(context: BuiltinContext): Map<string, BuiltinHand
     } catch {
       console.log(`cd: ${target}: No such file or directory`);
     }
-
-    context.prompt();
   });
 
   return builtins;
 }
 
-export function findExecutableInPath(command: string): string | null {
-  const paths = (process.env.PATH ?? "").split(path.delimiter);
-
-  for (const directory of paths) {
-    const fullPath = path.join(directory, command);
-
-    try {
-      fs.accessSync(fullPath, fs.constants.X_OK);
-      return fullPath;
-    } catch {
-      // file does not exist or is not executable
-    }
-  }
-
-  return null;
-}
