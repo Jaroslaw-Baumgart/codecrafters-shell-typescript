@@ -1,7 +1,11 @@
+const STDOUT_REDIRECT_OPERATORS = new Set([">", "1>"]);
+const STDERR_REDIRECT_OPERATORS = new Set(["2>"]);
+
 export interface ParsedCommand {
     command: string,
     args: string[],
-    stdoutRedirect? : string;
+    stdoutRedirect? : string,
+    stderrRedirect?: string;
 }
 
 export function parseCommand(tokens: string[]): ParsedCommand | null {
@@ -13,12 +17,19 @@ export function parseCommand(tokens: string[]): ParsedCommand | null {
 
     const args: string[] = [];
     let stdoutRedirect: string | undefined;
+    let stderrRedirect: string | undefined;
 
     for (let i = 1; i < tokens.length; i++) {
         const token = tokens[i]
 
-        if (token === ">" || token === "1>"){
+        if (STDOUT_REDIRECT_OPERATORS.has(token)){
             stdoutRedirect = tokens[i + 1];
+            i++;
+            continue;
+        }
+
+        if (STDERR_REDIRECT_OPERATORS.has(token)){
+            stderrRedirect = tokens[i + 1];
             i++;
             continue;
         }
@@ -30,5 +41,6 @@ export function parseCommand(tokens: string[]): ParsedCommand | null {
         command,
         args,
         stdoutRedirect,
+        stderrRedirect,
     };
 }

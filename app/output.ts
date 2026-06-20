@@ -3,30 +3,47 @@ import fs from "fs";
 
 export interface OutputWriter {
     stdout: "inherit" | number;
+    stderr: "inherit" | number;
     writeLine: (text: string) => void;
+    writeErrorLine: (text: string) => void;
     close: () => void;
 }
 
-export function createOutputWriter(stdoutRedirect?: string): OutputWriter {
-    if (!stdoutRedirect) {
-        return {
-            stdout: "inherit",
-            writeLine: (text: string) =>{
-                console.log(text);
-            },
-            close: () => {},
-        };
-    }
-
-    const fd = fs.openSync(stdoutRedirect, "w");
+export function createOutputWriter(
+    stdoutRedirect?: string,
+    stderrRedirect?: string
+): OutputWriter {
+    const stdoutFd = stdoutRedirect ? fs.openSync(stdoutRedirect, "w"): undefined;
+    const stderrFd = stderrRedirect ? fs.openSync(stderrRedirect, "w"): undefined;
 
     return {
-        stdout: fd,
+        stderr: stderrFd ?? "inherit",
+        stdout: stdoutFd ?? "inherit",
+
         writeLine: (text: string) => {
-            fs.writeSync(fd, `${text}\n`);
+            if (stdoutFd !== undefined){
+                fs.writeSync(stdoutFd, `${text}\n`);
+            } else {
+                console.error(text);
+            }
         },
+
+        writeErrorLine: (text: string) => {
+            if (stderrFd !== undefined){
+                fs.writeSync(stderrFd, `${text}\n`);
+            } else {
+                console.error(text);
+            }
+        },
+    
         close: () => {
-            fs.closeSync(fd);
+            if (stdoutFd !== undefined) {
+                fs.closeSync(stdoutFd);
+            }
+
+            if (stderrFd !== undefined) {
+                fs.closeSync(stderrFd);
+            }
         },
     };
 }

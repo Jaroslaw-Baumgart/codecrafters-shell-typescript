@@ -34,7 +34,10 @@ rl.on("line", (line: string) => {
     return;
   }
 
-  const output = createOutputWriter(parsedCommand.stdoutRedirect);
+  const output = createOutputWriter(
+    parsedCommand.stdoutRedirect,
+    parsedCommand.stderrRedirect
+  );
 
   try {
     const handler = builtins.get(parsedCommand.command);
@@ -46,6 +49,7 @@ rl.on("line", (line: string) => {
       parsedCommand.command,
       parsedCommand.args,
       output.stdout,
+      output.stderr,
     );
   }
 } finally {

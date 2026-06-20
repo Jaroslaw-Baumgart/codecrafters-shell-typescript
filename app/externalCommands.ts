@@ -24,6 +24,7 @@ export function handleExternalCommand(
     command: string, 
     args: string[],
     stdout: "inherit" | number,
+    stderr: "inherit" | number,
 ): void {
   const executablePath = findExecutableInPath(command);
 
@@ -33,6 +34,6 @@ export function handleExternalCommand(
   }
 
   spawnSync(command, args, {
-    stdio: ["inherit", stdout, "inherit"],
+    stdio: ["inherit", stdout, stderr],
   });
 }
