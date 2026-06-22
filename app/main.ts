@@ -45,13 +45,12 @@ rl.on("line", (line: string) => {
     if (handler) {
       handler(parsedCommand.args, output);
     } else {
-    handleExternalCommand(
-      parsedCommand.command,
-      parsedCommand.args,
-      output.stdout,
-      output.stderr,
-    );
-  }
+      handleExternalCommand(
+        parsedCommand.command,
+        parsedCommand.args,
+        output,
+      );
+    }
 } finally {
   output.close();
 

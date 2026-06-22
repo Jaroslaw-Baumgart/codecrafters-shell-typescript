@@ -22,7 +22,7 @@ export function createBuiltins(context: BuiltinContext): Map<string, BuiltinHand
     const [name] = args;
 
     if (!name) {
-      console.log("type: missing operand");
+      output.writeErrorLine("type: missing operand");
       return;
     }
 
@@ -44,7 +44,7 @@ export function createBuiltins(context: BuiltinContext): Map<string, BuiltinHand
     output.writeLine(process.cwd());
   });
 
-  builtins.set("cd", (args) => {
+  builtins.set("cd", (args, output) => {
     const directory = args[0] ?? "";
 
     let target = directory;
@@ -55,7 +55,7 @@ export function createBuiltins(context: BuiltinContext): Map<string, BuiltinHand
     try {
       process.chdir(target);
     } catch {
-      console.log(`cd: ${target}: No such file or directory`);
+      output.writeErrorLine(`cd: ${target}: No such file or directory`);
     }
   });
 

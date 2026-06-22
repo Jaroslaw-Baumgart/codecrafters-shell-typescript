@@ -2,6 +2,7 @@
 import { spawnSync } from "child_process";
 import path from "path";
 import fs from "fs";
+import type { OutputWriter } from "./output";
 
 export function findExecutableInPath(command: string): string | null {
   const paths = (process.env.PATH ?? "").split(path.delimiter);
@@ -23,17 +24,16 @@ export function findExecutableInPath(command: string): string | null {
 export function handleExternalCommand(
     command: string, 
     args: string[],
-    stdout: "inherit" | number,
-    stderr: "inherit" | number,
+    output: OutputWriter,
 ): void {
   const executablePath = findExecutableInPath(command);
 
   if (!executablePath) {
-    console.log(`${command}: command not found`);
+    output.writeErrorLine(`${command}: command not found`);
     return;
   }
 
   spawnSync(command, args, {
-    stdio: ["inherit", stdout, stderr],
+    stdio: ["inherit", output.stdout, output.stderr],
   });
 }
