@@ -23,8 +23,11 @@ rl = createInterface({
   completer: createCompleter({
     builtinNames: [...builtins.keys()],
     enabledBuiltinNames: new Set(["echo", "exit"]),
-    onMissingCompletion: () => {
+    onBell: () => {
       process.stdout.write("\x07");
+    },
+    onDisplayMatches: (matches, line) => {
+      process.stdout.write(`\n${matches.join(" ")}\n$ ${line}`);
     },
   }),
 });

@@ -14,7 +14,8 @@ type CompletionContext = {
 type CreateCompleterOptions = {
     builtinNames: string[];
     enabledBuiltinNames: Set<string>;
-    onMissingCompletion?: () => void;
+    onBell?: () => void;
+    onDisplayMatches?: (matches: string[], line: string) => void;
 };
 
 function getCompletionContext(line: string): CompletionContext{
@@ -33,15 +34,17 @@ function completeBuiltins(
     builtinNames: string[],
     enabledBuiltinNames: Set<string>
 ): string[] {
-    return builtinNames
-    .filter((name) => {
+     return builtinNames.filter((name) => {
         return enabledBuiltinNames.has(name) && name.startsWith(prefix);
-    })
-    .map((name) => `${name} `);
+    });
 }
 
 function completeExecutables(prefix: string): string[] {
-    return findExecutableNamesInPath(prefix).map((name) => `${name} `);
+    return findExecutableNamesInPath(prefix);
+}
+
+function areSameMatches(a: string[], b: string[]): boolean {
+    return a.length === b.length && a.every((value, index) => value === b[index]);
 }
 
 export function createCompleter(options: CreateCompleterOptions){
@@ -60,6 +63,10 @@ export function createCompleter(options: CreateCompleterOptions){
         ],
         ["argument", []],
     ]);
+
+    let lastMultipleCompletion:
+        | { prefix: string; matches: string[] }
+        | null = null;
     
     return (line: string): [string[], string] => {
         const context = getCompletionContext(line);
@@ -69,12 +76,34 @@ export function createCompleter(options: CreateCompleterOptions){
             ...new Set(
                 sources.flatMap((source) => source(context.prefix))
             ),
-        ];
+        ].sort();
 
         if (matches.length === 0) {
-            options.onMissingCompletion?.();
+            lastMultipleCompletion = null;
+            options.onBell?.();
+            return [[], context.prefix];
         }
 
-        return [matches, context.prefix];
+        if (matches.length === 1) {
+            lastMultipleCompletion = null;
+            return [[`${matches[0]} `], context.prefix];
+        }
+
+        const isRepeatedMultipleCompletion =
+            lastMultipleCompletion !== null &&
+            lastMultipleCompletion.prefix === context.prefix &&
+            areSameMatches(lastMultipleCompletion.matches, matches);
+
+            if(isRepeatedMultipleCompletion) {
+                options.onDisplayMatches?.(matches, line);
+            } else {
+                options.onBell?.();
+                lastMultipleCompletion ={
+                    prefix: context.prefix,
+                    matches
+                };
+            }
+
+        return [[], context.prefix];
     };
 }
