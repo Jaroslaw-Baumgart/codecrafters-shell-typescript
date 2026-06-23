@@ -1,24 +1,31 @@
-import { createInterface } from "readline";
 import { parseArgs } from "./parser";
 import { createBuiltins } from "./builtins";
 import { handleExternalCommand } from "./externalCommands";
 import { parseCommand } from "./command";
 import { createOutputWriter } from "./output";
+import { createInterface, type Interface } from "readline";
+import { createCompleter } from "./completion";
 
-const rl = createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  prompt: "$ ",
-});
-
+let rl: Interface;
 let isClosed = false;
 
 const builtins = createBuiltins({
   close: () => {
     isClosed = true;
-    rl.close()
+    rl.close();
   },
 });
+
+rl = createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  prompt: "$ ",
+  completer: createCompleter({
+    builtinNames: [...builtins.keys()],
+    enabledBuiltinNames: new Set(["echo", "exit"]),
+  }),
+});
+
 
 // TODO: Uncomment the code below to pass the first stage
 
