@@ -4,6 +4,36 @@ import path from "path";
 import fs from "fs";
 import type { OutputWriter } from "./output";
 
+export function findExecutableNamesInPath(prefix: string): string[] {
+  const paths = (process.env.PATH ?? "").split(path.delimiter);
+  const matches = new Set<string>();
+
+  for (const directory of paths) {
+    try {
+      const entries = fs.readdirSync(directory);
+
+      for (const entry of entries) {
+        if (!entry.startsWith(prefix)) {
+          continue;
+        }
+
+        const fullPath = path.join(directory, entry);
+
+        try {
+          fs.accessSync(fullPath, fs.constants.X_OK);
+          matches.add(entry);
+        } catch {
+          // not executable
+        }
+      }
+    } catch {
+      // ignore invalid PATH entries
+    }
+  }
+
+  return [...matches];
+}
+
 export function findExecutableInPath(command: string): string | null {
   const paths = (process.env.PATH ?? "").split(path.delimiter);
 

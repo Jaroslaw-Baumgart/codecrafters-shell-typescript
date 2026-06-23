@@ -1,4 +1,8 @@
+import { findExecutableNamesInPath } from "./externalCommands";
+
 type CompletionTarget = "command" | "argument";
+
+type CompletionSource = (prefix: string) => string [];
 
 
 type CompletionContext = {
@@ -6,8 +10,6 @@ type CompletionContext = {
     prefix: string;
     //tokenIndex: number;
 };
-
-//type CompletionSource = (prefix: string) => string [];
 
 type CreateCompleterOptions = {
     builtinNames: string[];
@@ -38,24 +40,41 @@ function completeBuiltins(
     .map((name) => `${name} `);
 }
 
+function completeExecutables(prefix: string): string[] {
+    return findExecutableNamesInPath(prefix).map((name) => `${name} `);
+}
+
 export function createCompleter(options: CreateCompleterOptions){
+    const sourcesByTarget = new Map<CompletionTarget, CompletionSource[]>([
+        [
+            "command",
+            [
+                (prefix) =>
+                    completeBuiltins(
+                        prefix,
+                        options.builtinNames,
+                        options.enabledBuiltinNames
+                    ),
+                completeExecutables,
+            ],
+        ],
+        ["argument", []],
+    ]);
+    
     return (line: string): [string[], string] => {
         const context = getCompletionContext(line);
+        const sources = sourcesByTarget.get(context.target) ?? [];
 
-        if (context.target !== "command") {
-            return [[], context.prefix];
-        }
-
-        const matches = completeBuiltins(
-            context.prefix,
-            options.builtinNames,
-            options.enabledBuiltinNames
-        );
+        const matches = [
+            ...new Set(
+                sources.flatMap((source) => source(context.prefix))
+            ),
+        ];
 
         if (matches.length === 0) {
             options.onMissingCompletion?.();
         }
 
         return [matches, context.prefix];
-    }
+    };
 }
