@@ -23,6 +23,9 @@ rl = createInterface({
   completer: createCompleter({
     builtinNames: [...builtins.keys()],
     enabledBuiltinNames: new Set(["echo", "exit"]),
+    onMissingCompletion: () => {
+      process.stdout.write("\x07");
+    },
   }),
 });
 

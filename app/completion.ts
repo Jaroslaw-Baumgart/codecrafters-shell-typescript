@@ -12,7 +12,7 @@ type CompletionContext = {
 type CreateCompleterOptions = {
     builtinNames: string[];
     enabledBuiltinNames: Set<string>;
-    onNoMatchs?: () => void;
+    onMissingCompletion?: () => void;
 };
 
 function getCompletionContext(line: string): CompletionContext{
@@ -53,7 +53,7 @@ export function createCompleter(options: CreateCompleterOptions){
         );
 
         if (matches.length === 0) {
-            options.onNoMatchs?.();
+            options.onMissingCompletion?.();
         }
 
         return [matches, context.prefix];
