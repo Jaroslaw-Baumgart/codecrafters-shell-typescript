@@ -30,9 +30,11 @@ function completeBuiltins(
     builtinNames: string[],
     enabledBuiltinNames: Set<string>
 ): string[] {
-    return builtinNames.filter((name) => {
+    return builtinNames
+    .filter((name) => {
         return enabledBuiltinNames.has(name) && name.startsWith(prefix);
-    });
+    })
+    .map((name) => `${name} `);
 }
 
 export function createCompleter(options: CreateCompleterOptions){
