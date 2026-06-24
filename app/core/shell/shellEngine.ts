@@ -1,0 +1,61 @@
+import type { ExecuteCommand } from "../execution/executor";
+import type { ExecutionResult } from "../execution/types";
+import { expandCommandLine } from "../expansion/expander";
+import { lexShell } from "../lexer/shellLexer";
+import { parseShell } from "../parser/shellParser";
+import type { Terminal, TerminalOutput } from "../ports";
+import type { ShellContext } from "./shellContext";
+
+interface Diagnostic {
+  message: string;
+}
+
+export class ShellEngine {
+  constructor(
+    readonly context: ShellContext,
+    private readonly output: TerminalOutput,
+    private readonly executeCommand: ExecuteCommand,
+  ) {}
+
+  async execute(line: string): Promise<ExecutionResult> {
+    const lexed = lexShell(line);
+    if (lexed.diagnostics.length) return this.report(lexed.diagnostics);
+
+    const parsed = parseShell(lexed.tokens);
+    if (parsed.diagnostics.length) return this.report(parsed.diagnostics);
+
+    const expanded = expandCommandLine(parsed.ast);
+    if (expanded.diagnostics.length) return this.report(expanded.diagnostics);
+    if (!expanded.command) return { exitCode: this.context.lastExitCode };
+
+    return this.executeCommand(expanded.command, this.context);
+  }
+
+  private report(diagnostics: readonly Diagnostic[]): ExecutionResult {
+    for (const diagnostic of diagnostics) {
+      this.output.writeError(`shell: ${diagnostic.message}\n`);
+    }
+    this.context.setLastExitCode(2);
+    return { exitCode: 2 };
+  }
+}
+
+export async function runShell(
+  shell: ShellEngine,
+  terminal: Terminal,
+  prompt = "$ ",
+): Promise<number> {
+  try {
+    if (shell.context.exitRequested) return shell.context.lastExitCode;
+    terminal.prompt(prompt);
+
+    for await (const line of terminal.lines()) {
+      await shell.execute(line);
+      if (shell.context.exitRequested) break;
+      terminal.prompt(prompt);
+    }
+    return shell.context.lastExitCode;
+  } finally {
+    terminal.close();
+  }
+}

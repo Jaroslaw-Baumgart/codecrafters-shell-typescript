@@ -1,76 +1,18 @@
-import { parseArgs } from "./parser";
-import { createBuiltins } from "./builtins";
-import { handleExternalCommand } from "./externalCommands";
-import { parseCommand } from "./command";
-import { createOutputWriter } from "./output";
-import { createInterface, type Interface } from "readline";
-import { createCompleter } from "./completion";
+import { NodeTerminal } from "./adapters/nodeTerminal";
+import { createCompletion } from "./core/completion/completion";
+import { completionSources } from "./core/completion/completionSources";
 
-let rl: Interface;
-let isClosed = false;
+import { createBuiltins } from "./core/execution/builtins";
+import { createExecutor } from "./core/execution/executor";
+import { runShell, ShellEngine } from "./core/shell/shellEngine";
+import { ShellContext } from "./core/shell/shellContext";
 
-const builtins = createBuiltins({
-  close: () => {
-    isClosed = true;
-    rl.close();
-  },
-});
+const context = new ShellContext(process.cwd(), process.env);
 
-rl = createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  prompt: "$ ",
-  completer: createCompleter({
-    builtinNames: [...builtins.keys()],
-    enabledBuiltinNames: new Set(["echo", "exit"]),
-    onBell: () => {
-      process.stdout.write("\x07");
-    },
-    onDisplayMatches: (matches, line) => {
-      process.stdout.write(`\n${matches.join(" ")}\n$ ${line}`);
-    },
-  }),
-});
+const builtins = createBuiltins();
+const complete = createCompletion(completionSources(builtins, context));
+const terminal = new NodeTerminal(complete);
+const execute = createExecutor(builtins, terminal);
+const shell = new ShellEngine(context, terminal, execute);
 
-
-// TODO: Uncomment the code below to pass the first stage
-
-
-rl.prompt();
-rl.on("line", (line: string) => {
-
-  const tokens = parseArgs(line);
-  const parsedCommand = parseCommand(tokens);
-
-  if (!parsedCommand) {
-    rl.prompt();
-    return;
-  }
-
-  const output = createOutputWriter(
-    parsedCommand.stdoutRedirect,
-    parsedCommand.stderrRedirect
-  );
-
-  try {
-    const handler = builtins.get(parsedCommand.command);
-  
-    if (handler) {
-      handler(parsedCommand.args, output);
-    } else {
-      handleExternalCommand(
-        parsedCommand.command,
-        parsedCommand.args,
-        output,
-      );
-    }
-} finally {
-  output.close();
-
-  if(!isClosed){
-    rl.prompt();
-  }
-}
-});
-
-//codecrafters submit
+process.exitCode = await runShell(shell, terminal);
