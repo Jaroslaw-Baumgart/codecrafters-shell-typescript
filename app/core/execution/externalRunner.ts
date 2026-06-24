@@ -17,6 +17,7 @@ export function runExternalCommand(
 
   return new Promise((resolve) => {
     const child = spawn(executable, command.args, {
+      argv0: command.name,
       cwd: context.cwd,
       env: { ...context.env },
       stdio: ["inherit", "pipe", "pipe"],
