@@ -2,6 +2,7 @@ import type { BuiltinRegistry } from "../execution/types";
 import { findExecutableNames } from "../execution/pathLookup";
 import type { ShellContext } from "../shell/shellContext";
 import type { CompletionSource } from "./completion";
+import { filenameSource } from "./filenameCompletion"
 
 export function completionSources(
   builtins: BuiltinRegistry,
@@ -10,6 +11,7 @@ export function completionSources(
   return [
     builtinSource(builtins),
     executableSource(shellContext),
+    filenameSource(shellContext),
   ];
 }
 
