@@ -1,6 +1,8 @@
 import { statSync } from "node:fs";
 import { resolve } from "node:path";
 
+import type { CompletionSpecStore } from "../completion/completionSpecStore";
+import { createCompleteBuiltin } from "./completeCommand";
 import { findExecutable } from "./pathLookup";
 
 import type {
@@ -10,7 +12,9 @@ import type {
   ExecutionResult,
 } from "./types";
 
-export function createBuiltins(): BuiltinRegistry {
+export function createBuiltins(
+  completionSpecs: CompletionSpecStore,
+): BuiltinRegistry {
   const builtins = new Map<string, BuiltinHandler>();
 
   builtins.set("exit", exitBuiltin);
@@ -18,7 +22,7 @@ export function createBuiltins(): BuiltinRegistry {
   builtins.set("pwd", pwdBuiltin);
   builtins.set("cd", cdBuiltin);
   builtins.set("type", createTypeBuiltin(builtins));
-  builtins.set("complete", completeBuiltin);
+  builtins.set("complete", createCompleteBuiltin(completionSpecs));
 
   return builtins;
 }
@@ -142,29 +146,6 @@ function createTypeBuiltin(
     return { exitCode: 1 };
   };
 }
-
-function completeBuiltin({
-  args,
-  output,
-}: BuiltinInvocation): ExecutionResult {
-  if (args[0] !== "-p") {
-    return { exitCode: 0 };
-  }
-
-  const command = args[1];
-
-  if (!command) {
-    return { exitCode: 1 };
-  }
-
-  output.stdout.write(
-    `complete: ${command}: no completion specification\n`,
-  );
-
-  return { exitCode: 1 };
-}
-
-
 
 function normalizeExitCode(exitCode: number): number {
   return ((exitCode % 256) + 256) % 256;
