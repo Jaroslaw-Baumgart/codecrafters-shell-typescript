@@ -1,5 +1,5 @@
 import { readdirSync } from "node:fs"
-import { resolve } from "node:fs";
+import { resolve } from "node:path";
 import type { ShellContext } from "../shell/shellContext"
 import type { CompletionSource } from "./completion"
 
