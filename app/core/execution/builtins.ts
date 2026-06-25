@@ -143,9 +143,28 @@ function createTypeBuiltin(
   };
 }
 
-function completeBuiltin(): ExecutionResult {
-  return { exitCode: 0 };
+function completeBuiltin({
+  args,
+  output,
+}: BuiltinInvocation): ExecutionResult {
+  if (args[0] !== "-p") {
+    return { exitCode: 0 };
+  }
+
+  const command = args[1];
+
+  if (!command) {
+    return { exitCode: 1 };
+  }
+
+  output.stdout.write(
+    `complete: ${command}: no completion specification\n`,
+  );
+
+  return { exitCode: 1 };
 }
+
+
 
 function normalizeExitCode(exitCode: number): number {
   return ((exitCode % 256) + 256) % 256;
