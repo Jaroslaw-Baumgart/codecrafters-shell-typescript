@@ -2,11 +2,13 @@ import { lexShell } from "../lexer/shellLexer";
 import type { QuoteMode, Token, WordToken } from "../lexer/token";
 
 export type CompletionTarget = "command" | "argument" | "redirect-target";
+export type CompletionCandidateKind = "command" | "file" | "directory";
 
 export interface CompletionCandidate {
   insertText: string;
   displayText: string;
   suffix: "" | " ";
+  kind: CompletionCandidateKind;
 }
 
 export interface CompletionContext {

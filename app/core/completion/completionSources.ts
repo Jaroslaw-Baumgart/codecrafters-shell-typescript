@@ -2,7 +2,7 @@ import type { BuiltinRegistry } from "../execution/types";
 import { findExecutableNames } from "../execution/pathLookup";
 import type { ShellContext } from "../shell/shellContext";
 import type { CompletionSource } from "./completion";
-import { filenameSource } from "./filenameCompletion"
+import { filenameSource } from "./filenameCompletion";
 
 export function completionSources(
   builtins: BuiltinRegistry,
@@ -19,12 +19,14 @@ function builtinSource(builtins: BuiltinRegistry): CompletionSource {
   const names = [...builtins.keys()].sort();
   return (context) => {
     if (context.target !== "command") return [];
+
     return names
       .filter((name) => name.startsWith(context.prefix))
       .map((name) => ({
         insertText: name,
         displayText: name,
-        suffix: " ",
+        suffix: " " as const,
+        kind: "command" as const,
       }));
   };
 }
@@ -35,7 +37,8 @@ function executableSource(shellContext: ShellContext): CompletionSource {
     return findExecutableNames(context.prefix, shellContext).map((name) => ({
       insertText: name,
       displayText: name,
-      suffix: " ",
+      suffix: " " as const,
+      kind: "command" as const,
     }));
   };
 }
