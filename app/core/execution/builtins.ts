@@ -18,6 +18,7 @@ export function createBuiltins(): BuiltinRegistry {
   builtins.set("pwd", pwdBuiltin);
   builtins.set("cd", cdBuiltin);
   builtins.set("type", createTypeBuiltin(builtins));
+  builtins.set("complete", completeBuiltin);
 
   return builtins;
 }
@@ -140,6 +141,10 @@ function createTypeBuiltin(
     output.stdout.write(`${name}: not found\n`);
     return { exitCode: 1 };
   };
+}
+
+function completeBuiltin(): ExecutionResult {
+  return { exitCode: 0 };
 }
 
 function normalizeExitCode(exitCode: number): number {
