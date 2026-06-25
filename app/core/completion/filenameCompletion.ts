@@ -16,8 +16,8 @@ export function filenameSource(
       return readdirSync(directoryToSearch)
         .filter((name) => name.startsWith(filePrefix))
         .map((name) => ({
-          insertText: name,
-          displayText: name,
+          insertText: directoryPart + name,
+          displayText: directoryPart + name,
           suffix: " " as const,
         }));
     } catch {
