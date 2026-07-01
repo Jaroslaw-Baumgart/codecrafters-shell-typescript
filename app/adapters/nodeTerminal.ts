@@ -13,7 +13,22 @@ export class NodeTerminal implements Terminal {
     this.readline = createInterface({
       input: stdin,
       output: stdout,
-      completer: complete ? (line: string) => this.completeLine(line) : undefined,
+      completer: complete
+        ? (
+            line: string,
+            callback: (error: Error | null, result: ReadlineResult) => void,
+          ) => {
+            void this.completeLine(line)
+              .then((result) => callback(null, result))
+              .catch((error: unknown) => {
+                const completionError = error instanceof Error
+                  ? error
+                  : new Error(String(error));
+
+                callback(completionError, [[], line]);
+              });
+          }
+        : undefined,
     });
   }
 
@@ -50,8 +65,8 @@ export class NodeTerminal implements Terminal {
     this.readline.close();
   }
 
-  private completeLine(line: string): ReadlineResult {
-    return this.toReadlineResult(this.complete!(line));
+  private async completeLine(line: string): Promise<ReadlineResult> {
+    return this.toReadlineResult(await this.complete!(line));
   }
 
   private toReadlineResult(result: CompletionResult): ReadlineResult {

@@ -2,7 +2,11 @@ import { lexShell } from "../lexer/shellLexer";
 import type { QuoteMode, Token, WordToken } from "../lexer/token";
 
 export type CompletionTarget = "command" | "argument" | "redirect-target";
-export type CompletionCandidateKind = "command" | "file" | "directory";
+export type CompletionCandidateKind =
+  | "command"
+  | "file"
+  | "directory"
+  | "argument";
 
 export interface CompletionCandidate {
   insertText: string;
@@ -13,6 +17,7 @@ export interface CompletionCandidate {
 
 export interface CompletionContext {
   target: CompletionTarget;
+  commandName: string | null;
   prefix: string;
   replaceText: string;
   quoteMode: QuoteMode;
@@ -25,17 +30,28 @@ export interface CompletionResult {
   displayCandidates: CompletionCandidate[];
 }
 
-export type CompletionSource = (context: CompletionContext) => CompletionCandidate[];
-export type Complete = (line: string, cursor?: number) => CompletionResult;
+export type CompletionSource = (
+  context: CompletionContext,
+) => CompletionCandidate[] | Promise<CompletionCandidate[]>;
+
+export type Complete = (
+  line: string,
+  cursor?: number,
+) => Promise<CompletionResult>;
 
 export function createCompletion(sources: readonly CompletionSource[]): Complete {
   let lastAmbiguousKey: string | null = null;
 
-  return (line, cursor = line.length) => {
+  return async (line, cursor = line.length) => {
     const context = completionContext(line, cursor);
+
+    const sourceResults = await Promise.all(
+      sources.map((source) => source(context)),
+    );
+
     const candidates = normalizeCandidates(
       context,
-      sources.flatMap((source) => source(context)),
+      sourceResults.flat(),
     );
 
     if (candidates.length === 0) {
@@ -71,6 +87,11 @@ export function createCompletion(sources: readonly CompletionSource[]): Complete
   };
 }
 
+function commandName(tokens: readonly Token[]): string | null {
+  const firstToken = tokens.find((token) => token.type === "word");
+  return firstToken ? wordValue(firstToken) : null;
+}
+
 function completionContext(line: string, cursor: number): CompletionContext {
   const { tokens, finalQuoteMode } = lexShell(line.slice(0, cursor), {
     tolerateIncomplete: true,
@@ -81,6 +102,7 @@ function completionContext(line: string, cursor: number): CompletionContext {
 
   return {
     target,
+    commandName: commandName(tokens),
     prefix: activeWord ? wordValue(activeWord) : "",
     replaceText: line.slice(start, cursor),
     quoteMode: finalQuoteMode,

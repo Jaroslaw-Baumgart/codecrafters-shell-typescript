@@ -28,7 +28,9 @@ export function createShell({
 
   const completionSpecs = new CompletionSpecStore();
   const builtins = createBuiltins(completionSpecs);
-  const complete = createCompletion(completionSources(builtins, context));
+  const complete = createCompletion(
+    completionSources(builtins, context, completionSpecs),
+  );
   const terminal = createTerminal(complete);
   const execute = createExecutor(builtins, terminal);
   const shell = new ShellEngine(context, terminal, execute);

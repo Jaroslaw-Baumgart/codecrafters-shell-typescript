@@ -3,15 +3,18 @@ import { findExecutableNames } from "../execution/pathLookup";
 import type { ShellContext } from "../shell/shellContext";
 import type { CompletionSource } from "./completion";
 import { filenameSource } from "./filenameCompletion";
+import type { CompletionSpecStore } from "./completionSpecStore";
+import { programmableCompletionSource } from "./programmableCompletion";
 
 export function completionSources(
   builtins: BuiltinRegistry,
   shellContext: ShellContext,
+  completionSpecs: CompletionSpecStore,
 ): CompletionSource[] {
   return [
     builtinSource(builtins),
     executableSource(shellContext),
-    filenameSource(shellContext),
+    argumentSource(completionSpecs, shellContext),
   ];
 }
 
@@ -40,5 +43,23 @@ function executableSource(shellContext: ShellContext): CompletionSource {
       suffix: " " as const,
       kind: "command" as const,
     }));
+  };
+}
+
+function argumentSource(
+  completionSpecs: CompletionSpecStore,
+  shellContext: ShellContext,
+): CompletionSource {
+  const programmable = programmableCompletionSource(completionSpecs, shellContext);
+  const filename = filenameSource(shellContext);
+
+  return (context) => {
+    if (context.target !== "argument") return [];
+
+    if (context.commandName && completionSpecs.get(context.commandName)) {
+      return programmable(context);
+    }
+
+    return filename(context);
   };
 }
