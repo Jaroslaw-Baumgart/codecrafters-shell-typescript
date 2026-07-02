@@ -18,6 +18,8 @@ export interface CompletionCandidate {
 export interface CompletionContext {
   target: CompletionTarget;
   commandName: string | null;
+  words: string[];
+  currentWordIndex: number;
   prefix: string;
   replaceText: string;
   quoteMode: QuoteMode;
@@ -87,9 +89,24 @@ export function createCompletion(sources: readonly CompletionSource[]): Complete
   };
 }
 
-function commandName(tokens: readonly Token[]): string | null {
-  const firstToken = tokens.find((token) => token.type === "word");
-  return firstToken ? wordValue(firstToken) : null;
+function wordTokens(tokens: readonly Token[]): WordToken[] {
+  return tokens.filter(
+    (token): token is WordToken => token.type === "word",
+  );
+}
+
+function wordValues(words: readonly WordToken[]): string[] {
+  return words.map(wordValue);
+}
+
+function currentWordIndex(
+  words: readonly WordToken[],
+  activeWord: WordToken | null,
+): number {
+  if (!activeWord) return words.length;
+
+  const index = words.indexOf(activeWord);
+  return index === -1 ? words.length : index;
 }
 
 function completionContext(line: string, cursor: number): CompletionContext {
@@ -99,10 +116,14 @@ function completionContext(line: string, cursor: number): CompletionContext {
   const activeWord = findActiveWord(tokens, cursor);
   const target = findTarget(tokens, activeWord);
   const start = activeWord?.span.start ?? cursor;
+  const words = wordTokens(tokens);
+  const values = wordValues(words);
 
   return {
     target,
-    commandName: commandName(tokens),
+    commandName: values[0] ?? null,
+    words: values,
+    currentWordIndex: currentWordIndex(words, activeWord),
     prefix: activeWord ? wordValue(activeWord) : "",
     replaceText: line.slice(start, cursor),
     quoteMode: finalQuoteMode,
