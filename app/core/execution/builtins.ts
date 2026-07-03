@@ -23,6 +23,7 @@ export function createBuiltins(
   builtins.set("cd", cdBuiltin);
   builtins.set("type", createTypeBuiltin(builtins));
   builtins.set("complete", createCompleteBuiltin(completionSpecs));
+  builtins.set("jobs", () => ({ exitCode: 0 }));
 
   return builtins;
 }
