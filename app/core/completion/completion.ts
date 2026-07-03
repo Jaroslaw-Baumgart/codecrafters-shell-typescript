@@ -23,6 +23,8 @@ export interface CompletionContext {
   prefix: string;
   replaceText: string;
   quoteMode: QuoteMode;
+  line: string;
+  cursor: number;
 }
 
 export interface CompletionResult {
@@ -127,6 +129,8 @@ function completionContext(line: string, cursor: number): CompletionContext {
     prefix: activeWord ? wordValue(activeWord) : "",
     replaceText: line.slice(start, cursor),
     quoteMode: finalQuoteMode,
+    line,
+    cursor,
   };
 }
 

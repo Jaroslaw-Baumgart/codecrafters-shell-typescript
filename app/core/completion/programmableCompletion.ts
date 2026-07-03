@@ -17,8 +17,9 @@ export function programmableCompletionSource(
 
     const output = await runCompleter(
       spec.completerPath,
-      shellContext,
+      shellContext.cwd,
       completerArgs(context),
+      completerEnvironment(shellContext, context),
     );
 
     return output
@@ -35,13 +36,14 @@ export function programmableCompletionSource(
 
 function runCompleter(
   completerPath: string,
-  shellContext: ShellContext,
+  cwd: string,
   args: readonly string[],
+  env: Record<string, string | undefined>,
 ): Promise<string> {
   return new Promise((resolve) => {
     const child = spawn(completerPath, [...args], {
-      cwd: shellContext.cwd,
-      env: { ...shellContext.env },
+      cwd,
+      env,
       stdio: ["ignore", "pipe", "ignore"],
     });
 
@@ -75,4 +77,19 @@ function previousWord(context: CompletionContext): string {
   }
 
   return context.words[context.currentWordIndex - 1] ?? "";
+}
+
+function completerEnvironment(
+  shellContext: ShellContext,
+  context: CompletionContext,
+): Record<string, string | undefined> {
+  return {
+    ...shellContext.env,
+    COMP_LINE: context.line,
+    COMP_POINT: byteIndex(context.line, context.cursor).toString(),
+  };
+}
+
+function byteIndex(value: string, cursor: number): number {
+  return Buffer.byteLength(value.slice(0, cursor));
 }
