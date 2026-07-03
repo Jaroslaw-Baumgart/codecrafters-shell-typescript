@@ -16,6 +16,9 @@ export function createCompleteBuiltin(
       case "-p":
         return printCompletion(completionSpecs, invocation);
 
+      case "-r":
+        return  unregisterCompletion(completionSpecs, invocation);
+
       default:
         return { exitCode: 0 };
     }
@@ -59,6 +62,21 @@ function printCompletion(
   }
 
   output.stdout.write(`${formatted}\n`);
+
+  return { exitCode: 0 };
+}
+
+function unregisterCompletion(
+  completionSpecs: CompletionSpecStore,
+  { args }: BuiltinInvocation,
+): ExecutionResult {
+  const command = args[1];
+
+  if (!command) {
+    return { exitCode: 1 };
+  }
+
+  completionSpecs.unregister(command);
 
   return { exitCode: 0 };
 }
