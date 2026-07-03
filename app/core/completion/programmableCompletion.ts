@@ -72,7 +72,7 @@ function completerArgs(context: CompletionContext): string[] {
 }
 
 function previousWord(context: CompletionContext): string {
-  if (context.currentWordIndex <= 1) {
+  if (context.currentWordIndex === 0) {
     return "";
   }
 
