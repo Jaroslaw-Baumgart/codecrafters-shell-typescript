@@ -17,6 +17,7 @@ export interface ExpandedCommand {
   name: string;
   args: string[];
   redirects: ExpandedRedirection[];
+  background: boolean;
 }
 
 export interface ExpansionResult {
@@ -85,6 +86,7 @@ export function expandCommandLine(
     name,
     args,
     redirects,
+    background: commandLine.background,
   };
 
   return {

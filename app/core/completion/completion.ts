@@ -154,7 +154,7 @@ function findTarget(
     }
 
     if (token === activeWord) return wordIndex === 0 ? "command" : "argument";
-    wordIndex++;
+    if (token.type === "word") wordIndex++;
   }
 
   if (redirectTarget) return "redirect-target";

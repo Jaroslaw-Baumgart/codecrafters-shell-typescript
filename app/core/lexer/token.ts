@@ -35,7 +35,12 @@ export interface RedirectToken {
   span: SourceSpan;
 }
 
-export type Token = WordToken | RedirectToken;
+export interface BackgroundToken {
+  type: "background";
+  span: SourceSpan;
+}
+
+export type Token = WordToken | RedirectToken | BackgroundToken;
 
 export interface LexerDiagnostic {
   message: string;

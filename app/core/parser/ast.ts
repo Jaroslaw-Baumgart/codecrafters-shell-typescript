@@ -3,6 +3,7 @@ import type { SourceSpan, WordPart } from "../lexer/token";
 export interface CommandLine {
   type: "command-line";
   body: SimpleCommand | null;
+  background: boolean;
   span: SourceSpan;
 }
 

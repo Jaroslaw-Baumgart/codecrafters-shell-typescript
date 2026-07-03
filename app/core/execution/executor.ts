@@ -1,7 +1,9 @@
 import type { ExpandedCommand } from "../expansion/expander";
+import type { JobStore } from "../jobs/jobStore";
 import type { ExecutionTerminal } from "../ports";
 import type { ShellContext } from "../shell/shellContext";
 
+import { startBackgroundCommand } from "./backgroundRunner";
 import { runExternalCommand } from "./externalRunner";
 import { openCommandOutput } from "./redirects";
 
@@ -19,6 +21,7 @@ export type ExecuteCommand = (
 export function createExecutor(
   builtins: BuiltinRegistry,
   terminal: ExecutionTerminal,
+  jobs: JobStore,
   runExternal: RunExternalCommand = runExternalCommand,
 ): ExecuteCommand {
   return async (command, context) => {
@@ -35,8 +38,19 @@ export function createExecutor(
       const builtin = builtins.get(command.name);
 
       let result: ExecutionResult;
-      if (builtin) {
-        result = await builtin({ args: command.args, context, output: openedOutput.output });
+      if (command.background && !builtin) {
+        result = startBackgroundCommand(
+          command,
+          context,
+          openedOutput.output,
+          jobs,
+        );
+      } else if (builtin) {
+        result = await builtin({
+          args: command.args,
+          context,
+          output: openedOutput.output,
+        });
       } else {
         terminal.pauseInput();
         try {

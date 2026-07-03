@@ -20,21 +20,40 @@ export interface ParserResult {
 
 export function parseShell(tokens: readonly Token[]): ParserResult {
   const span = commandSpan(tokens);
-  if (tokens.length === 0) {
-    return { ast: { type: "command-line", body: null, span }, diagnostics: [] };
+  const background = tokens[tokens.length - 1]?.type === "background";
+  const commandTokens = background ? tokens.slice(0, -1) : tokens;
+
+  if (commandTokens.length === 0) {
+    return {
+      ast: {
+        type: "command-line",
+        body: null,
+        background,
+        span,
+      },
+      diagnostics: [],
+    };
   }
 
   const parts: SimpleCommandPart[] = [];
   const diagnostics: ParserResult["diagnostics"] = [];
 
-  for (let index = 0; index < tokens.length; index++) {
-    const token = tokens[index];
+  for (let index = 0; index < commandTokens.length; index++) {
+    const token = commandTokens[index];
     if (token.type === "word") {
       parts.push(toWord(token));
       continue;
     }
 
-    const target = tokens[index + 1];
+    if (token.type === "background") {
+      diagnostics.push({
+        message: "Unexpected &",
+        span: token.span,
+      });
+      continue;
+    }
+
+    const target = commandTokens[index + 1];
     if (!target || target.type !== "word") {
       diagnostics.push({
         message: `Expected redirect target after ${token.operator}`,
@@ -51,6 +70,7 @@ export function parseShell(tokens: readonly Token[]): ParserResult {
     ast: {
       type: "command-line",
       body: { type: "simple-command", parts, span },
+      background,
       span,
     },
     diagnostics,
