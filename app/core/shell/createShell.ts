@@ -28,12 +28,12 @@ export function createShell({
   const context = new ShellContext(cwd, env);
 
   const completionSpecs = new CompletionSpecStore();
-  const builtins = createBuiltins(completionSpecs);
+  const jobs = new JobStore();
+  const builtins = createBuiltins(completionSpecs, jobs);
   const complete = createCompletion(
     completionSources(builtins, context, completionSpecs),
   );
   const terminal = createTerminal(complete);
-  const jobs = new JobStore();
   const execute = createExecutor(builtins, terminal, jobs);
   const shell = new ShellEngine(context, terminal, execute);
 

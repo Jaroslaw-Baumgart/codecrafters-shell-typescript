@@ -2,6 +2,8 @@ import { statSync } from "node:fs";
 import { resolve } from "node:path";
 
 import type { CompletionSpecStore } from "../completion/completionSpecStore";
+import type { JobStore } from "../jobs/jobStore";
+import { createJobsBuiltin } from "../jobs/jobsCommand";
 import { createCompleteBuiltin } from "./completeCommand";
 import { findExecutable } from "./pathLookup";
 
@@ -14,6 +16,7 @@ import type {
 
 export function createBuiltins(
   completionSpecs: CompletionSpecStore,
+  jobs: JobStore,
 ): BuiltinRegistry {
   const builtins = new Map<string, BuiltinHandler>();
 
@@ -23,7 +26,7 @@ export function createBuiltins(
   builtins.set("cd", cdBuiltin);
   builtins.set("type", createTypeBuiltin(builtins));
   builtins.set("complete", createCompleteBuiltin(completionSpecs));
-  builtins.set("jobs", () => ({ exitCode: 0 }));
+  builtins.set("jobs", createJobsBuiltin(jobs));
 
   return builtins;
 }
