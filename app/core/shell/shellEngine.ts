@@ -15,7 +15,12 @@ export class ShellEngine {
     readonly context: ShellContext,
     private readonly output: TerminalOutput,
     private readonly executeCommand: ExecuteCommand,
+    private readonly beforePrompt: () => void = () => {},
   ) {}
+
+  preparePrompt(): void {
+    this.beforePrompt();
+  }
 
   async execute(line: string): Promise<ExecutionResult> {
     const lexed = lexShell(line);
@@ -47,11 +52,13 @@ export async function runShell(
 ): Promise<number> {
   try {
     if (shell.context.exitRequested) return shell.context.lastExitCode;
+    shell.preparePrompt();
     terminal.prompt(prompt);
 
     for await (const line of terminal.lines()) {
       await shell.execute(line);
       if (shell.context.exitRequested) break;
+      shell.preparePrompt();
       terminal.prompt(prompt);
     }
     return shell.context.lastExitCode;

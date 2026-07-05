@@ -5,6 +5,7 @@ import { CompletionSpecStore } from "../completion/completionSpecStore";
 import { createBuiltins } from "../execution/builtins";
 import { createExecutor } from "../execution/executor";
 import { JobStore } from "../jobs/jobStore";
+import { reportDoneJobs } from "../jobs/jobReporter";
 import type { Terminal } from "../ports";
 import { ShellContext, type ShellEnvironment } from "./shellContext";
 import { ShellEngine } from "./shellEngine";
@@ -35,7 +36,14 @@ export function createShell({
   );
   const terminal = createTerminal(complete);
   const execute = createExecutor(builtins, terminal, jobs);
-  const shell = new ShellEngine(context, terminal, execute);
+  const shell = new ShellEngine(
+    context,
+    terminal,
+    execute,
+    () => reportDoneJobs(jobs, {
+      write: (data) => terminal.write(data),
+    }),
+  );
 
   return { shell, terminal };
 }
