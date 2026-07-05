@@ -1,4 +1,4 @@
-export type JobStatus = "Running";
+export type JobStatus = "Running" | "Done";
 
 export interface Job {
   id: number;
@@ -21,6 +21,17 @@ export class JobStore {
 
     this.jobs.set(job.id, job);
     return job;
+  }
+
+  markDone(id: number): void {
+    const job = this.jobs.get(id);
+    if (!job) return ;
+
+    job.status = "Done";
+  }
+
+  remove(id: number): void {
+    this.jobs.delete(id);
   }
 
   list(): Job[] {

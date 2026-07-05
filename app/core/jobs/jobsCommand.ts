@@ -10,12 +10,19 @@ export function createJobsBuiltin(jobs: JobStore): BuiltinHandler {
       output.stdout.write(formatJob(job, markerFor(job, entries)));
     }
 
+    for (const job of entries) {
+      if (job.status === "Done") {
+        jobs.remove(job.id);
+      }
+    }
+
     return { exitCode: 0 };
   };
 }
 
 function markerFor(job: Job, jobs: readonly Job[]): string {
-  const index = jobs.indexOf(job);
+  const sorted = [...jobs].sort((a, b) => a.id - b.id);
+  const index = sorted.findIndex((item) => item.id === job.id);
 
   if (index === jobs.length - 1) {
     return "+";
@@ -29,5 +36,9 @@ function markerFor(job: Job, jobs: readonly Job[]): string {
 }
 
 function formatJob(job: Job, marker: string): string {
-  return `[${job.id}]${marker}  ${job.status.padEnd(24)}${job.command} &\n`;
+  const command = job.status === "Running"
+    ? `${job.command} &`
+    : job.command;
+
+  return `[${job.id}]${marker}  ${job.status.padEnd(24)}${command}\n`;
 }
