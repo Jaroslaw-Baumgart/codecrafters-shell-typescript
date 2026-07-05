@@ -8,12 +8,18 @@ export interface Job {
 }
 
 export class JobStore {
-  private nextId = 1;
+  private nextJobId(): number {
+    const ids = [...this.jobs.keys()];
+
+    if (ids.length === 0) return 1;
+
+    return Math.max(...ids) + 1;
+  }
   private readonly jobs = new Map<number, Job>();
 
   add(pid: number, command: string): Job {
     const job = {
-      id: this.nextId++,
+      id: this.nextJobId(),
       pid,
       command,
       status: "Running" as const,
