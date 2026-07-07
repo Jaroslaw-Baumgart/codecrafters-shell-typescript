@@ -2,8 +2,14 @@ import type { SourceSpan, WordPart } from "../lexer/token";
 
 export interface CommandLine {
   type: "command-line";
-  body: SimpleCommand | null;
+  body: Pipeline | null;
   background: boolean;
+  span: SourceSpan;
+}
+
+export interface Pipeline {
+  type: "pipeline";
+  commands: SimpleCommand[];
   span: SourceSpan;
 }
 

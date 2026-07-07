@@ -4,6 +4,7 @@ import type {
   Redirection,
   RedirectStream,
   Word,
+  SimpleCommand,
 } from "../parser/ast";
 import type { SourceSpan } from "../lexer/token";
 
@@ -17,11 +18,15 @@ export interface ExpandedCommand {
   name: string;
   args: string[];
   redirects: ExpandedRedirection[];
+}
+
+export interface ExpandedPipeline {
+  commands: ExpandedCommand[];
   background: boolean;
 }
 
 export interface ExpansionResult {
-  command: ExpandedCommand | null;
+  pipeline: ExpandedPipeline | null;
   diagnostics: Array<{ message: string; span: SourceSpan }>;
 }
 
@@ -44,15 +49,50 @@ function expandRedirection(
 export function expandCommandLine(
   commandLine: CommandLine,
 ): ExpansionResult {
-  const command = commandLine.body;
+  const pipeline = commandLine.body;
 
-  if (!command) {
+  if (!pipeline) {
     return {
-      command: null,
+      pipeline: null,
       diagnostics: [],
     };
   }
 
+  const commands: ExpandedCommand[] = [];
+  const diagnostics: ExpansionResult["diagnostics"] = [];
+
+  for (const command of pipeline.commands) {
+    const expanded = expandSimpleCommand(command);
+    diagnostics.push(...expanded.diagnostics);
+
+    if (expanded.command) {
+      commands.push(expanded.command);
+    }
+  }
+
+  if (diagnostics.length > 0) {
+    return {
+      pipeline: null,
+      diagnostics,
+    };
+  }
+
+  return {
+    pipeline: {
+      commands,
+      background: commandLine.background,
+    },
+    diagnostics: [],
+  };
+
+}
+
+function expandSimpleCommand(
+  command: SimpleCommand,
+): {
+  command: ExpandedCommand | null;
+  diagnostics: Array<{ message: string; span: SourceSpan }>;
+} {
   const words: string[] = [];
   const redirects: ExpandedRedirection[] = [];
 
@@ -82,15 +122,12 @@ export function expandCommandLine(
 
   const [name, ...args] = words;
 
-  const expandedCommand: ExpandedCommand = {
-    name,
-    args,
-    redirects,
-    background: commandLine.background,
-  };
-
   return {
-    command: expandedCommand,
+    command: {
+      name,
+      args,
+      redirects,
+    },
     diagnostics: [],
   };
 }

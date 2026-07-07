@@ -1,4 +1,4 @@
-import type { ExpandedCommand } from "../expansion/expander";
+import type { ExpandedPipeline } from "../expansion/expander";
 import type { JobStore } from "../jobs/jobStore";
 import type { ExecutionTerminal } from "../ports";
 import type { ShellContext } from "../shell/shellContext";
@@ -6,6 +6,7 @@ import type { ShellContext } from "../shell/shellContext";
 import { startBackgroundCommand } from "./backgroundRunner";
 import { runExternalCommand } from "./externalRunner";
 import { openCommandOutput } from "./redirects";
+import { runPipeline } from "./pipelineRunner";
 
 import type {
   BuiltinRegistry,
@@ -14,7 +15,7 @@ import type {
 } from "./types";
 
 export type ExecuteCommand = (
-  command: ExpandedCommand,
+  pipeline: ExpandedPipeline,
   context: ShellContext,
 ) => Promise<ExecutionResult>;
 
@@ -24,7 +25,10 @@ export function createExecutor(
   jobs: JobStore,
   runExternal: RunExternalCommand = runExternalCommand,
 ): ExecuteCommand {
-  return async (command, context) => {
+  return async (pipeline, context) => {
+    const command = pipeline.commands[0];
+    if (!command) return finishExecution(context, 0);
+
     let openedOutput;
 
     try {
@@ -35,10 +39,26 @@ export function createExecutor(
     }
 
     try {
+      if (pipeline.commands.length > 1) {
+        terminal.pauseInput();
+        try {
+          const result = await runPipeline(
+            pipeline,
+            context,
+            openedOutput.output,
+            builtins,
+          );
+          context.setLastExitCode(result.exitCode);
+          return result;
+        } finally {
+          terminal.resumeInput();
+        }
+      }
+
       const builtin = builtins.get(command.name);
 
       let result: ExecutionResult;
-      if (command.background && !builtin) {
+      if (pipeline.background && !builtin) {
         result = startBackgroundCommand(
           command,
           context,

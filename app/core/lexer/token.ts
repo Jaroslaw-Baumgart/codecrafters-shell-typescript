@@ -40,7 +40,12 @@ export interface BackgroundToken {
   span: SourceSpan;
 }
 
-export type Token = WordToken | RedirectToken | BackgroundToken;
+export interface PipeToken {
+  type: "pipe";
+  span: SourceSpan;
+}
+
+export type Token = WordToken | RedirectToken | BackgroundToken | PipeToken;
 
 export interface LexerDiagnostic {
   message: string;

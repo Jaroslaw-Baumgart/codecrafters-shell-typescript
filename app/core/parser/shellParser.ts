@@ -9,6 +9,7 @@ import type {
   Redirection,
   RedirectMode,
   RedirectStream,
+  SimpleCommand,
   SimpleCommandPart,
   Word,
 } from "./ast";
@@ -35,47 +36,38 @@ export function parseShell(tokens: readonly Token[]): ParserResult {
     };
   }
 
-  const parts: SimpleCommandPart[] = [];
   const diagnostics: ParserResult["diagnostics"] = [];
+  const segments = splitPipeline(commandTokens);
 
-  for (let index = 0; index < commandTokens.length; index++) {
-    const token = commandTokens[index];
-    if (token.type === "word") {
-      parts.push(toWord(token));
-      continue;
-    }
-
-    if (token.type === "background") {
+  for (const segment of segments) {
+    if (segment.length === 0) {
       diagnostics.push({
-        message: "Unexpected &",
-        span: token.span,
+        message: "Expected command in pipeline",
+        span,
       });
-      continue;
     }
-
-    const target = commandTokens[index + 1];
-    if (!target || target.type !== "word") {
-      diagnostics.push({
-        message: `Expected redirect target after ${token.operator}`,
-        span: { start: token.span.end, end: token.span.end },
-      });
-      continue;
-    }
-
-    parts.push(toRedirection(token.operator, token.span, toWord(target)));
-    index++;
   }
+
+  const commands = segments
+    .filter((segment) => segment.length > 0)
+    .map((segment) => parseSimpleCommand(segment, diagnostics));
 
   return {
     ast: {
       type: "command-line",
-      body: { type: "simple-command", parts, span },
+      body: {
+        type: "pipeline",
+        commands,
+        span,
+      },
       background,
       span,
     },
     diagnostics,
   };
 }
+
+
 
 function toWord(token: WordToken): Word {
   return { type: "word", parts: [...token.parts], span: { ...token.span } };
@@ -109,4 +101,71 @@ function redirectStream(operator: RedirectOperator): RedirectStream {
 
 function redirectMode(operator: RedirectOperator): RedirectMode {
   return operator.endsWith(">>") ? "append" : "overwrite";
+}
+
+function splitPipeline(tokens: readonly Token[]): Token[][] {
+  const segments: Token[][] = [[]];
+
+  for (const token of tokens) {
+    if (token.type === "pipe") {
+      segments.push([]);
+      continue;
+    }
+
+    segments[segments.length - 1].push(token);
+  }
+
+  return segments;
+}
+
+function parseSimpleCommand(
+  tokens: readonly Token[],
+  diagnostics: ParserResult["diagnostics"],
+): SimpleCommand {
+  const parts: SimpleCommandPart[] = [];
+  const span = commandSpan(tokens);
+
+  for (let index = 0; index < tokens.length; index++) {
+    const token = tokens[index];
+
+    if (token.type === "word") {
+      parts.push(toWord(token));
+      continue;
+    }
+
+    if (token.type === "background") {
+      diagnostics.push({
+        message: "Unexpected &",
+        span: token.span,
+      });
+      continue;
+    }
+
+    if (token.type === "pipe") {
+      diagnostics.push({
+        message: "Unexpected |",
+        span: token.span,
+      });
+      continue;
+    }
+
+    const target = tokens[index + 1];
+
+    if (!target || target.type !== "word") {
+      diagnostics.push({
+        message: `Expected redirect target after ${token.operator}`,
+        span: { start: token.span.end, end: token.span.end },
+      });
+      continue;
+    }
+
+    parts.push(toRedirection(token.operator, token.span, toWord(target)));
+    index++;
+  }
+
+  return {
+    type: "simple-command",
+    parts,
+    span,
+  };
 }

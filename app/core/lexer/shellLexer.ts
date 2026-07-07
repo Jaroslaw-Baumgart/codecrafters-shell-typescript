@@ -141,7 +141,18 @@ export function lexShell(
       continue;
     }
 
+    if (character === "|") {
+      finishWord(index);
+      tokens.push({
+        type: "pipe",
+        span: { start: index, end: index + 1 },
+      });
+      index++;
+      continue;
+    }
+
     const redirect = matchRedirect(input, index, wordStart !== null);
+    
     if (redirect) {
       finishWord(index);
       tokens.push({

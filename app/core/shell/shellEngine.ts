@@ -31,9 +31,9 @@ export class ShellEngine {
 
     const expanded = expandCommandLine(parsed.ast);
     if (expanded.diagnostics.length) return this.report(expanded.diagnostics);
-    if (!expanded.command) return { exitCode: this.context.lastExitCode };
+    if (!expanded.pipeline) return { exitCode: this.context.lastExitCode };
 
-    return this.executeCommand(expanded.command, this.context);
+    return this.executeCommand(expanded.pipeline, this.context);
   }
 
   private report(diagnostics: readonly Diagnostic[]): ExecutionResult {
