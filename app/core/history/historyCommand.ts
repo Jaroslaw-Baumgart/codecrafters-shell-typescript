@@ -8,7 +8,7 @@ export function createHistoryBuiltin(
     return({ args, output }) => {
         const entries = selectedEntries(history, args);
 
-        for (const entry of history.list()) {
+        for (const entry of entries) {
             output.stdout.write(formatHistoryEntry(entry));
         }
 
