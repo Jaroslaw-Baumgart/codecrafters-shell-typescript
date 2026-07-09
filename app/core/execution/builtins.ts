@@ -27,6 +27,7 @@ export function createBuiltins(
   builtins.set("type", createTypeBuiltin(builtins));
   builtins.set("complete", createCompleteBuiltin(completionSpecs));
   builtins.set("jobs", createJobsBuiltin(jobs));
+  builtins.set("history", () => ({ exitCode: 0 }));
 
   return builtins;
 }
