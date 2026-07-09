@@ -9,7 +9,7 @@ export class HistoryStore {
 
     add(command: string): HistoryEntry{
         const entry = {
-            id: this.nextId,
+            id: this.nextId++,
             command,
         };
 
