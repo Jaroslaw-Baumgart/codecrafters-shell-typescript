@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 
 import type { CompletionSpecStore } from "../completion/completionSpecStore";
 import type { JobStore } from "../jobs/jobStore";
+import type { HistoryStore } from "../history/historyStore";
+import { createHistoryBuiltin } from "../history/historyCommand";
 import { createJobsBuiltin } from "../jobs/jobsCommand";
 import { createCompleteBuiltin } from "./completeCommand";
 import { findExecutable } from "./pathLookup";
@@ -17,6 +19,7 @@ import type {
 export function createBuiltins(
   completionSpecs: CompletionSpecStore,
   jobs: JobStore,
+  history: HistoryStore,
 ): BuiltinRegistry {
   const builtins = new Map<string, BuiltinHandler>();
 
@@ -27,7 +30,7 @@ export function createBuiltins(
   builtins.set("type", createTypeBuiltin(builtins));
   builtins.set("complete", createCompleteBuiltin(completionSpecs));
   builtins.set("jobs", createJobsBuiltin(jobs));
-  builtins.set("history", () => ({ exitCode: 0 }));
+  builtins.set("history", createHistoryBuiltin(history));
 
   return builtins;
 }

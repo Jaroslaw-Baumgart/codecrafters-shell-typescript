@@ -9,6 +9,7 @@ import { reportDoneJobs } from "../jobs/jobReporter";
 import type { Terminal } from "../ports";
 import { ShellContext, type ShellEnvironment } from "./shellContext";
 import { ShellEngine } from "./shellEngine";
+import { HistoryStore } from "../history/historyStore";
 
 export interface CreateShellOptions {
   cwd: string;
@@ -30,7 +31,8 @@ export function createShell({
 
   const completionSpecs = new CompletionSpecStore();
   const jobs = new JobStore();
-  const builtins = createBuiltins(completionSpecs, jobs);
+  const history = new HistoryStore();
+  const builtins = createBuiltins(completionSpecs, jobs, history);
   const complete = createCompletion(
     completionSources(builtins, context, completionSpecs),
   );
@@ -43,6 +45,7 @@ export function createShell({
     () => reportDoneJobs(jobs, {
       write: (data) => terminal.write(data),
     }),
+    (line) => history.add(line),
   );
 
   return { shell, terminal };

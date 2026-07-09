@@ -16,6 +16,7 @@ export class ShellEngine {
     private readonly output: TerminalOutput,
     private readonly executeCommand: ExecuteCommand,
     private readonly beforePrompt: () => void = () => {},
+    private readonly recordHistory: (line: string) => void = () => {},
   ) {}
 
   preparePrompt(): void {
@@ -23,6 +24,10 @@ export class ShellEngine {
   }
 
   async execute(line: string): Promise<ExecutionResult> {
+    if (line.trim().length > 0) {
+      this.recordHistory(line);
+    }
+    
     const lexed = lexShell(line);
     if (lexed.diagnostics.length) return this.report(lexed.diagnostics);
 
