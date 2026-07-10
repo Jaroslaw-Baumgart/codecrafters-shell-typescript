@@ -17,6 +17,12 @@ export class HistoryStore {
         return entry;
     }
 
+    addAll(commads: readonly string[]): void {
+        for (const command of commads) {
+            this.add(command)
+        }
+    }
+
     list(): HistoryEntry[] {
         return[...this.entries];
     }

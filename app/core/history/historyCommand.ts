@@ -1,4 +1,5 @@
 import { connect } from "bun";
+import { readHistoryFile } from "./historyPersistence";
 import type { BuiltinHandler } from "../execution/types";
 import type { HistoryEntry, HistoryStore } from "./historyStore";
 
@@ -6,6 +7,17 @@ export function createHistoryBuiltin(
     history: HistoryStore,
 ): BuiltinHandler {
     return({ args, output }) => {
+        if (args[0] === "-r") {
+            const path = args[1];
+
+            if (!path) {
+                return { exitCode: 1};
+            }
+
+            history.addAll(readHistoryFile(path));
+            return { exitCode: 0};
+        }
+
         const entries = selectedEntries(history, args);
 
         for (const entry of entries) {
