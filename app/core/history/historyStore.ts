@@ -5,10 +5,21 @@ export interface HistoryEntry {
 
 export class HistoryStore {
     private nextId = 1;
+    private appendCursor = 0;
     private readonly entries: HistoryEntry[] = [];
 
     commands(): string[] {
         return this.entries.map((entry) => entry.command)
+    }
+
+    pendingAppendCommands(): string[] {
+        return this.entries
+            .slice(this.appendCursor)
+            .map((entry) => entry.command);
+    }
+
+    markAppended(): void {
+        this.appendCursor = this.entries.length;
     }
 
     add(command: string): HistoryEntry{

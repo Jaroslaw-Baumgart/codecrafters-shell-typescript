@@ -1,7 +1,11 @@
 import { connect, write } from "bun";
-import { readHistoryFile, writeHistoryFile } from "./historyPersistence";
 import type { BuiltinHandler } from "../execution/types";
 import type { HistoryEntry, HistoryStore } from "./historyStore";
+import { 
+    appendHistoryFile,
+    readHistoryFile,
+    writeHistoryFile
+} from "./historyPersistence";
 
 export function createHistoryBuiltin(
     history: HistoryStore,
@@ -26,6 +30,19 @@ export function createHistoryBuiltin(
             }
 
             writeHistoryFile(path, history.commands());
+            return { exitCode: 0 };
+        }
+
+        if (args[0] === "-a") {
+            const path = args[1];
+
+            if (!path) {
+                return { exitCode: 1 };
+            }
+
+            appendHistoryFile(path, history.pendingAppendCommands());
+            history.markAppended();
+
             return { exitCode: 0 };
         }
 

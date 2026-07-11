@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 
 export function readHistoryFile(path: string): string[] {
     return readFileSync(path, "utf8")
@@ -17,4 +17,13 @@ function serializeHistory(commands: readonly string[]): string{
     return commands.length === 0
         ? ""
         : `${commands.join("\n")}\n`
+}
+
+export function appendHistoryFile(
+    path: string,
+    commands: readonly string[],
+): void {
+    if (commands.length === 0) return;
+
+    appendFileSync(path, serializeHistory(commands), "utf8");
 }
