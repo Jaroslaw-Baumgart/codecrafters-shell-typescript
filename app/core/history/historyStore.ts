@@ -9,7 +9,7 @@ export class HistoryStore {
     private readonly entries: HistoryEntry[] = [];
 
     commands(): string[] {
-        return this.entries.map((entry) => entry.command)
+        return this.entries.map((entry) => entry.command);
     }
 
     pendingAppendCommands(): string[] {
@@ -22,7 +22,7 @@ export class HistoryStore {
         this.appendCursor = this.entries.length;
     }
 
-    add(command: string): HistoryEntry{
+    add(command: string): HistoryEntry {
         const entry = {
             id: this.nextId++,
             command,
@@ -32,15 +32,15 @@ export class HistoryStore {
         return entry;
     }
 
-    addAll(commads: readonly string[]): void {
-        for (const command of commads) {
-            this.add(command)
+    addAll(commands: readonly string[]): void {
+        for (const command of commands) {
+            this.add(command);
         }
     }
 
 
     list(): HistoryEntry[] {
-        return[...this.entries];
+        return [...this.entries];
     }
 
     recent(limit: number): HistoryEntry[] {

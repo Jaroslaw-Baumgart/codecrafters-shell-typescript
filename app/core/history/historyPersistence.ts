@@ -13,10 +13,10 @@ export function writeHistoryFile(
   writeFileSync(path, serializeHistory(commands), "utf8");
 }
 
-function serializeHistory(commands: readonly string[]): string{
+function serializeHistory(commands: readonly string[]): string {
     return commands.length === 0
         ? ""
-        : `${commands.join("\n")}\n`
+        : `${commands.join("\n")}\n`;
 }
 
 export function appendHistoryFile(

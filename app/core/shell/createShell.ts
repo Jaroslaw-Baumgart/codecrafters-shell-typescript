@@ -10,6 +10,7 @@ import type { Terminal } from "../ports";
 import { ShellContext, type ShellEnvironment } from "./shellContext";
 import { ShellEngine } from "./shellEngine";
 import { HistoryStore } from "../history/historyStore";
+import { readHistoryFile } from "../history/historyPersistence";
 
 export interface CreateShellOptions {
   cwd: string;
@@ -32,6 +33,13 @@ export function createShell({
   const completionSpecs = new CompletionSpecStore();
   const jobs = new JobStore();
   const history = new HistoryStore();
+
+  const historyFile = env.HISTFILE;
+
+  if (historyFile) {
+    history.addAll(readHistoryFile(historyFile));
+  }
+
   const builtins = createBuiltins(completionSpecs, jobs, history);
   const complete = createCompletion(
     completionSources(builtins, context, completionSpecs),

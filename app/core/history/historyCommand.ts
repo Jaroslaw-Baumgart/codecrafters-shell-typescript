@@ -1,10 +1,9 @@
-import { connect, write } from "bun";
 import type { BuiltinHandler } from "../execution/types";
 import type { HistoryEntry, HistoryStore } from "./historyStore";
-import { 
-    appendHistoryFile,
-    readHistoryFile,
-    writeHistoryFile
+import {
+  appendHistoryFile,
+  readHistoryFile,
+  writeHistoryFile,
 } from "./historyPersistence";
 
 export function createHistoryBuiltin(
@@ -55,24 +54,24 @@ function historyFilePath(args: readonly string[]): string | null {
 }
 
 function formatHistoryEntry(entry: HistoryEntry): string {
-    return `${entry.id.toString().padStart(5)}  ${entry.command}\n`;
+  return `${entry.id.toString().padStart(5)}  ${entry.command}\n`;
 }
 
 function selectedEntries(
-    history: HistoryStore,
-    args: readonly string[],
+  history: HistoryStore,
+  args: readonly string[],
 ): HistoryEntry[] {
-    const limit = args[0];
+  const limit = args[0];
 
-    if (limit === undefined) {
-        return history.list();
-    }
+  if (limit === undefined) {
+    return history.list();
+  }
 
-    const count = Number(limit);
+  const count = Number(limit);
 
-    if (!Number.isFinite(count)) {
-        return history.list();
-    }
+  if (!Number.isFinite(count)) {
+    return history.list();
+  }
 
-    return history.recent(count)
+  return history.recent(count);
 }
