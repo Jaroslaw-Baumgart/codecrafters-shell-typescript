@@ -16,5 +16,5 @@ export function writeHistoryFile(
 function serializeHistory(commands: readonly string[]): string{
     return commands.length === 0
         ? ""
-        : `${commands.join("n")}\n`
+        : `${commands.join("\n")}\n`
 }
