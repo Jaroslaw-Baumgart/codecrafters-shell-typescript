@@ -157,6 +157,15 @@ function createTypeBuiltin(
   };
 }
 
+function declareBuiltin({ args, output }: BuiltinInvocation) {
+  if (args[0] === "-p" && args[1]) {
+    output.stdout.write(`declare: ${args[1]}: not found\n`)
+    return { exitCode: 1 };
+  }
+
+  return { exitCode: 0 };
+}
+
 function normalizeExitCode(exitCode: number): number {
   return ((exitCode % 256) + 256) % 256;
 }
