@@ -7,6 +7,10 @@ export class HistoryStore {
     private nextId = 1;
     private readonly entries: HistoryEntry[] = [];
 
+    commands(): string[] {
+        return this.entries.map((entry) => entry.command)
+    }
+
     add(command: string): HistoryEntry{
         const entry = {
             id: this.nextId++,
@@ -22,6 +26,7 @@ export class HistoryStore {
             this.add(command)
         }
     }
+
 
     list(): HistoryEntry[] {
         return[...this.entries];

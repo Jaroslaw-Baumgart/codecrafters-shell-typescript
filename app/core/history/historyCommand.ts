@@ -1,5 +1,5 @@
-import { connect } from "bun";
-import { readHistoryFile } from "./historyPersistence";
+import { connect, write } from "bun";
+import { readHistoryFile, writeHistoryFile } from "./historyPersistence";
 import type { BuiltinHandler } from "../execution/types";
 import type { HistoryEntry, HistoryStore } from "./historyStore";
 
@@ -16,6 +16,17 @@ export function createHistoryBuiltin(
 
             history.addAll(readHistoryFile(path));
             return { exitCode: 0};
+        }
+
+        if (args[0] === "-w") {
+            const path = args[1];
+
+            if (!path) {
+                return { exitCode: 1 };
+            }
+
+            writeHistoryFile(path, history.commands());
+            return { exitCode: 0 };
         }
 
         const entries = selectedEntries(history, args);
