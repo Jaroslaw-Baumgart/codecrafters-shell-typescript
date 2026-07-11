@@ -8,52 +8,50 @@ import {
 } from "./historyPersistence";
 
 export function createHistoryBuiltin(
-    history: HistoryStore,
+  history: HistoryStore,
 ): BuiltinHandler {
-    return({ args, output }) => {
-        if (args[0] === "-r") {
-            const path = args[1];
+  return ({ args, output }) => {
+    switch (args[0]) {
+      case "-r": {
+        const path = historyFilePath(args);
+        if (!path) return { exitCode: 1 };
 
-            if (!path) {
-                return { exitCode: 1};
-            }
+        history.addAll(readHistoryFile(path));
+        return { exitCode: 0 };
+      }
 
-            history.addAll(readHistoryFile(path));
-            return { exitCode: 0};
-        }
+      case "-w": {
+        const path = historyFilePath(args);
+        if (!path) return { exitCode: 1 };
 
-        if (args[0] === "-w") {
-            const path = args[1];
+        writeHistoryFile(path, history.commands());
+        return { exitCode: 0 };
+      }
 
-            if (!path) {
-                return { exitCode: 1 };
-            }
+      case "-a": {
+        const path = historyFilePath(args);
+        if (!path) return { exitCode: 1 };
 
-            writeHistoryFile(path, history.commands());
-            return { exitCode: 0 };
-        }
+        appendHistoryFile(path, history.pendingAppendCommands());
+        history.markAppended();
+        return { exitCode: 0 };
+      }
 
-        if (args[0] === "-a") {
-            const path = args[1];
-
-            if (!path) {
-                return { exitCode: 1 };
-            }
-
-            appendHistoryFile(path, history.pendingAppendCommands());
-            history.markAppended();
-
-            return { exitCode: 0 };
-        }
-
+      default: {
         const entries = selectedEntries(history, args);
 
         for (const entry of entries) {
-            output.stdout.write(formatHistoryEntry(entry));
+          output.stdout.write(formatHistoryEntry(entry));
         }
 
         return { exitCode: 0 };
-    };
+      }
+    }
+  };
+}
+
+function historyFilePath(args: readonly string[]): string | null {
+  return args[1] ?? null;
 }
 
 function formatHistoryEntry(entry: HistoryEntry): string {
