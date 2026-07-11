@@ -8,6 +8,8 @@ import { createHistoryBuiltin } from "../history/historyCommand";
 import { createJobsBuiltin } from "../jobs/jobsCommand";
 import { createCompleteBuiltin } from "./completeCommand";
 import { findExecutable } from "./pathLookup";
+import type { VariableStore } from "../variables/variableStore";
+import { createDeclareBuiltin } from "../variables/declareCommand";
 
 import type {
   BuiltinHandler,
@@ -15,12 +17,12 @@ import type {
   BuiltinRegistry,
   ExecutionResult,
 } from "./types";
-import { exitCode } from "node:process";
 
 export function createBuiltins(
   completionSpecs: CompletionSpecStore,
   jobs: JobStore,
   history: HistoryStore,
+  variables: VariableStore,
 ): BuiltinRegistry {
   const builtins = new Map<string, BuiltinHandler>();
 
@@ -32,7 +34,7 @@ export function createBuiltins(
   builtins.set("complete", createCompleteBuiltin(completionSpecs));
   builtins.set("jobs", createJobsBuiltin(jobs));
   builtins.set("history", createHistoryBuiltin(history));
-  builtins.set("declare", declareBuiltin);
+  builtins.set("declare", createDeclareBuiltin(variables));
 
   return builtins;
 }
@@ -155,15 +157,6 @@ function createTypeBuiltin(
     output.stdout.write(`${name}: not found\n`);
     return { exitCode: 1 };
   };
-}
-
-function declareBuiltin({ args, output }: BuiltinInvocation) {
-  if (args[0] === "-p" && args[1]) {
-    output.stdout.write(`declare: ${args[1]}: not found\n`)
-    return { exitCode: 1 };
-  }
-
-  return { exitCode: 0 };
 }
 
 function normalizeExitCode(exitCode: number): number {
