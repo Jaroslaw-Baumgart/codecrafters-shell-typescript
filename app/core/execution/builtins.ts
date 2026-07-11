@@ -32,7 +32,7 @@ export function createBuiltins(
   builtins.set("complete", createCompleteBuiltin(completionSpecs));
   builtins.set("jobs", createJobsBuiltin(jobs));
   builtins.set("history", createHistoryBuiltin(history));
-  builtins.set("declare", () => { exitCode: 0});
+  builtins.set("declare", () => ({ exitCode: 0 }));
 
   return builtins;
 }
