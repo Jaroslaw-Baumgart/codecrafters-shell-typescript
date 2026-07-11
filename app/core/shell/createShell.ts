@@ -10,7 +10,9 @@ import type { Terminal } from "../ports";
 import { ShellContext, type ShellEnvironment } from "./shellContext";
 import { ShellEngine } from "./shellEngine";
 import { HistoryStore } from "../history/historyStore";
-import { readHistoryFile } from "../history/historyPersistence";
+import { appendHistoryFile,
+  readHistoryFile
+} from "../history/historyPersistence";
 
 export interface CreateShellOptions {
   cwd: string;
@@ -38,6 +40,7 @@ export function createShell({
 
   if (historyFile) {
     history.addAll(readHistoryFile(historyFile));
+    history.markAppended();
   }
 
   const builtins = createBuiltins(completionSpecs, jobs, history);
@@ -54,6 +57,12 @@ export function createShell({
       write: (data) => terminal.write(data),
     }),
     (line) => history.add(line),
+    () => {
+      if (!historyFile) return;
+
+      appendHistoryFile(historyFile, history.pendingAppendCommands());
+      history.markAppended();
+    },
   );
 
   return { shell, terminal };

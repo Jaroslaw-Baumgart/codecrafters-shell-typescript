@@ -17,10 +17,15 @@ export class ShellEngine {
     private readonly executeCommand: ExecuteCommand,
     private readonly beforePrompt: () => void = () => {},
     private readonly recordHistory: (line: string) => void = () => {},
+    private readonly onExit: () => void = () => {},
   ) {}
 
   preparePrompt(): void {
     this.beforePrompt();
+  }
+
+  finsh(): void {
+    this.onExit();
   }
 
   async execute(line: string): Promise<ExecutionResult> {
@@ -68,6 +73,7 @@ export async function runShell(
     }
     return shell.context.lastExitCode;
   } finally {
+    shell.finsh();
     terminal.close();
   }
 }
