@@ -149,7 +149,12 @@ function expandParameters(
   value: string,
   variables: VariableStore,
 ): string {
-  return value.replace(
+  return value
+    .replace(
+    /\$([A-Za-z_][A-Za-z0-9_]*)/g,
+    (_match, name: string) => variables.get(name)?.value ?? `$${name}`,
+  )
+  .replace(
     /\$([A-Za-z_][A-Za-z0-9_]*)/g,
     (_match, name: string) => variables.get(name)?.value ?? `$${name}`,
   );
