@@ -111,10 +111,16 @@ function expandSimpleCommand(
 
   for (const part of command.parts) {
     switch (part.type) {
-      case "word":
-        words.push(expandWord(part, context));
-        break;
+      case "word": {
+        const expandedWord = expandWord(part, context);
 
+        if (expandedWord.length > 0) {
+          words.push(expandedWord);
+        }
+        
+        break;
+      }
+      
       case "redirection":
         redirects.push(expandRedirection(part, context));
         break;
