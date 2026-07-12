@@ -1,3 +1,4 @@
+import { exitCode } from "node:process";
 import type {
   BuiltinHandler,
   BuiltinInvocation,
@@ -38,6 +39,8 @@ function declareBuiltin(
     return { exitCode: 0 };
   }
 
+  let exitCode = 0;
+
   for (const assignment of args) {
     const separatorIndex = assignment.indexOf("=");
 
@@ -48,8 +51,20 @@ function declareBuiltin(
     const name = assignment.slice(0, separatorIndex);
     const value = assignment.slice(separatorIndex + 1);
 
+    if (!isValidVariableName(name)) {
+      output.stderr.write(
+        `declare: \`${assignment}': not a valid identifier\n`,
+      );
+      exitCode = 1;
+      continue;
+    }
+
     variables.set(name, value);
   }
 
-  return { exitCode: 0 };
+  return { exitCode };
+}
+
+function isValidVariableName(name: string): boolean {
+  return /^[A-Za-z_][A-Za-z0-9_]*$/.test(name);
 }
