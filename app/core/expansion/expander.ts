@@ -120,7 +120,7 @@ function expandSimpleCommand(
         
         break;
       }
-      
+
       case "redirection":
         redirects.push(expandRedirection(part, context));
         break;
@@ -158,10 +158,10 @@ function expandParameters(
   return value
     .replace(
       /\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g,
-      (_match, name: string) => variables.get(name)?.value ?? `\${${name}}`,
+      (_match, name: string) => variables.get(name)?.value ?? "",
     )
     .replace(
       /\$([A-Za-z_][A-Za-z0-9_]*)/g,
-      (_match, name: string) => variables.get(name)?.value ?? `$${name}`,
+      (_match, name: string) => variables.get(name)?.value ?? "",
     );
 }
