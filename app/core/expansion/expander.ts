@@ -7,11 +7,16 @@ import type {
   SimpleCommand,
 } from "../parser/ast";
 import type { SourceSpan } from "../lexer/token";
+import type { VariableStore } from "../variables/variableStore";
 
 export interface ExpandedRedirection {
   stream: RedirectStream;
   mode: RedirectMode;
   path: string;
+}
+
+export interface ExpansionContext {
+  variables: VariableStore;
 }
 
 export interface ExpandedCommand {
@@ -30,24 +35,31 @@ export interface ExpansionResult {
   diagnostics: Array<{ message: string; span: SourceSpan }>;
 }
 
-function expandWord(word: Word): string {
-  return word.parts
+function expandWord(
+  word: Word,
+  context: ExpansionContext,
+): string {
+  const value = word.parts
     .map((part) => part.value)
     .join("");
+
+  return expandParameters(value, context.variables);
 }
 
 function expandRedirection(
   redirection: Redirection,
+  context: ExpansionContext,
 ): ExpandedRedirection {
   return {
     stream: redirection.stream,
     mode: redirection.mode,
-    path: expandWord(redirection.target),
+    path: expandWord(redirection.target, context),
   };
 }
 
 export function expandCommandLine(
   commandLine: CommandLine,
+  context: ExpansionContext,
 ): ExpansionResult {
   const pipeline = commandLine.body;
 
@@ -62,7 +74,7 @@ export function expandCommandLine(
   const diagnostics: ExpansionResult["diagnostics"] = [];
 
   for (const command of pipeline.commands) {
-    const expanded = expandSimpleCommand(command);
+    const expanded = expandSimpleCommand(command, context);
     diagnostics.push(...expanded.diagnostics);
 
     if (expanded.command) {
@@ -89,6 +101,7 @@ export function expandCommandLine(
 
 function expandSimpleCommand(
   command: SimpleCommand,
+  context: ExpansionContext,
 ): {
   command: ExpandedCommand | null;
   diagnostics: Array<{ message: string; span: SourceSpan }>;
@@ -99,11 +112,11 @@ function expandSimpleCommand(
   for (const part of command.parts) {
     switch (part.type) {
       case "word":
-        words.push(expandWord(part));
+        words.push(expandWord(part, context));
         break;
 
       case "redirection":
-        redirects.push(expandRedirection(part));
+        redirects.push(expandRedirection(part, context));
         break;
     }
   }
@@ -130,4 +143,14 @@ function expandSimpleCommand(
     },
     diagnostics: [],
   };
+}
+
+function expandParameters(
+  value: string,
+  variables: VariableStore,
+): string {
+  return value.replace(
+    /\$([A-Za-z_][A-Za-z0-9_]*)/g,
+    (_match, name: string) => variables.get(name)?.value ?? `$${name}`,
+  );
 }

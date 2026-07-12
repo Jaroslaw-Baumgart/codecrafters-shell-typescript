@@ -5,6 +5,7 @@ import { lexShell } from "../lexer/shellLexer";
 import { parseShell } from "../parser/shellParser";
 import type { Terminal, TerminalOutput } from "../ports";
 import type { ShellContext } from "./shellContext";
+import type { VariableStore } from "../variables/variableStore";
 
 interface Diagnostic {
   message: string;
@@ -15,6 +16,7 @@ export class ShellEngine {
     readonly context: ShellContext,
     private readonly output: TerminalOutput,
     private readonly executeCommand: ExecuteCommand,
+    private readonly variables: VariableStore,
     private readonly beforePrompt: () => void = () => {},
     private readonly recordHistory: (line: string) => void = () => {},
     private readonly onExit: () => void = () => {},
@@ -24,7 +26,7 @@ export class ShellEngine {
     this.beforePrompt();
   }
 
-  finsh(): void {
+  finish(): void {
     this.onExit();
   }
 
@@ -32,14 +34,17 @@ export class ShellEngine {
     if (line.trim().length > 0) {
       this.recordHistory(line);
     }
-    
+
     const lexed = lexShell(line);
     if (lexed.diagnostics.length) return this.report(lexed.diagnostics);
 
     const parsed = parseShell(lexed.tokens);
     if (parsed.diagnostics.length) return this.report(parsed.diagnostics);
 
-    const expanded = expandCommandLine(parsed.ast);
+    const expanded = expandCommandLine(parsed.ast, {
+      variables: this.variables,
+    });
+
     if (expanded.diagnostics.length) return this.report(expanded.diagnostics);
     if (!expanded.pipeline) return { exitCode: this.context.lastExitCode };
 
@@ -73,7 +78,7 @@ export async function runShell(
     }
     return shell.context.lastExitCode;
   } finally {
-    shell.finsh();
+    shell.finish();
     terminal.close();
   }
 }

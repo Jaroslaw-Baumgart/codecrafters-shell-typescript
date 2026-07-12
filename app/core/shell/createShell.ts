@@ -56,6 +56,7 @@ export function createShell({
     context,
     terminal,
     execute,
+    variables,
     () => reportDoneJobs(jobs, {
       write: (data) => terminal.write(data),
     }),
