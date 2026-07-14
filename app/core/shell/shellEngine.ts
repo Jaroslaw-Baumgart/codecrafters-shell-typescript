@@ -43,6 +43,7 @@ export class ShellEngine {
 
     const expanded = expandCommandLine(parsed.ast, {
       variables: this.variables,
+      env: this.context.env,
     });
 
     if (expanded.diagnostics.length) return this.report(expanded.diagnostics);

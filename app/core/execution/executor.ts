@@ -29,35 +29,52 @@ export function createExecutor(
     const command = pipeline.commands[0];
     if (!command) return finishExecution(context, 0);
 
+    if (pipeline.commands.length > 1) {
+      terminal.pauseInput();
+    
+
+      try {
+        const result = await runPipeline(
+          pipeline,
+          context,
+          {
+            stdout: { write: (data) => terminal.write(data) },
+            stderr: { write: (data) => terminal.writeError(data) },
+          },
+          builtins,
+        );
+
+        return finishExecution(context, result.exitCode);
+      } finally {
+        terminal.resumeInput();
+      }
+    }
+
     let openedOutput;
 
     try {
-      openedOutput = openCommandOutput(terminal, command.redirects);
+      openedOutput = openCommandOutput(
+        {
+          stdout: {
+            write: (data) => terminal.write(data),
+          },
+          stderr: {
+            write: (data) => terminal.writeError(data),
+          },
+        },
+        command.redirects,
+        context.cwd,
+      );
     } catch (error) {
       terminal.writeError(`${command.name}: ${errorMessage(error)}\n`);
       return finishExecution(context, 1);
     }
 
     try {
-      if (pipeline.commands.length > 1) {
-        terminal.pauseInput();
-        try {
-          const result = await runPipeline(
-            pipeline,
-            context,
-            openedOutput.output,
-            builtins,
-          );
-          context.setLastExitCode(result.exitCode);
-          return result;
-        } finally {
-          terminal.resumeInput();
-        }
-      }
-
       const builtin = builtins.get(command.name);
 
       let result: ExecutionResult;
+
       if (pipeline.background && !builtin) {
         result = startBackgroundCommand(
           command,
@@ -73,15 +90,19 @@ export function createExecutor(
         });
       } else {
         terminal.pauseInput();
+
         try {
-          result = await runExternal(command, context, openedOutput.output);
+          result = await runExternal(
+            command,
+            context,
+            openedOutput.output,
+          );
         } finally {
           terminal.resumeInput();
         }
       }
 
-      context.setLastExitCode(result.exitCode);
-      return result;
+      return finishExecution(context, result.exitCode);
     } catch (error) {
       openedOutput.output.stderr.write(
         `${command.name}: ${errorMessage(error)}\n`,

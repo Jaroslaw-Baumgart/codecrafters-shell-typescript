@@ -7,6 +7,15 @@ import {
   type WordPart,
 } from "./token";
 
+type QuoteState = 
+  | {
+    mode: "unquoted";
+    }
+  | {
+    mode: "single" | "double";
+    start: number;
+  };
+
 export interface ShellLexerOptions {
   tolerateIncomplete?: boolean;
 }
@@ -18,9 +27,8 @@ export function lexShell(
   const tokens: Token[] = [];
   const diagnostics: LexerResult["diagnostics"] = [];
   let index = 0;
-  const state: { quoteMode: QuoteMode; quoteStart: number | null } = {
-    quoteMode: "unquoted",
-    quoteStart: null,
+  let quoteState: QuoteState = {
+    mode: "unquoted",
   };
   let wordStart: number | null = null;
   let parts: WordPart[] = [];
@@ -59,33 +67,50 @@ export function lexShell(
     parts = [];
   };
 
-  const openQuote = (mode: Exclude<QuoteMode, "unquoted">): void => {
+  const openQuote = (
+    mode: Exclude<QuoteMode, "unquoted">
+  ): QuoteState => {
+    const start = index;
+
     wordStart ??= index;
     append("", mode, false, index + 1, index + 1);
-    state.quoteMode = mode;
-    state.quoteStart = index;
     index++;
+    
+    return {
+      mode,
+      start,
+    };
   };
 
   while (index < input.length) {
     const character = input[index];
 
-    if (state.quoteMode === "single") {
+    if (quoteState.mode === "single") {
       if (character === "'") {
-        state.quoteMode = "unquoted";
-        state.quoteStart = null;
+        quoteState = {
+          mode: "unquoted",
+        };
+
         index++;
       } else {
-        append(character, "single", false, index, index + 1);
+        append(
+          character,
+          "single",
+          false,
+          index,
+          index + 1
+        );
+
         index++;
       }
       continue;
     }
 
-    if (state.quoteMode === "double") {
+    if (quoteState.mode === "double") {
       if (character === '"') {
-        state.quoteMode = "unquoted";
-        state.quoteStart = null;
+        quoteState = {
+          mode: "unquoted",
+        };
         index++;
         continue;
       }
@@ -111,11 +136,11 @@ export function lexShell(
     }
 
     if (character === "'") {
-      openQuote("single");
+      quoteState = openQuote("single");
       continue;
     }
     if (character === '"') {
-      openQuote("double");
+      quoteState = openQuote("double");
       continue;
     }
 
@@ -169,14 +194,24 @@ export function lexShell(
   }
 
   finishWord(input.length);
-  if (state.quoteMode !== "unquoted" && !options.tolerateIncomplete) {
+  if (
+    quoteState.mode !== "unquoted" &&
+    !options.tolerateIncomplete
+  ) {
     diagnostics.push({
-      message: `Unclosed ${state.quoteMode} quote`,
-      span: { start: state.quoteStart ?? input.length, end: input.length },
+      message: `Unclosed ${quoteState.mode} quote`,
+      span: {
+        start: quoteState.start,
+        end: input.length 
+      },
     });
   }
 
-  return { tokens, diagnostics, finalQuoteMode: state.quoteMode };
+  return {
+    tokens,
+    diagnostics,
+    finalQuoteMode: quoteState.mode
+  };
 }
 
 function matchRedirect(

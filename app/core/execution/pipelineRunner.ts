@@ -4,6 +4,7 @@ import { PassThrough, type Readable, type Writable } from "node:stream";
 import type { ExpandedCommand, ExpandedPipeline } from "../expansion/expander";
 import type { ShellContext } from "../shell/shellContext";
 import { findExecutable } from "./pathLookup";
+import { openCommandOutput } from "./redirects";
 import type {
   BuiltinRegistry,
   CommandOutput,
@@ -102,19 +103,58 @@ async function runPipelineStage({
   stderr,
   children,
 }: PipelineStageOptions): Promise<ExecutionResult> {
+  let openedOutput;
+
+  try {
+    openedOutput = openCommandOutput(
+      { stdout, stderr },
+      command.redirects,
+      context.cwd,
+    );
+  } catch (error) {
+    stderr.write(
+      `${command.name}: ${errorMessage(error)}\n`,
+    );
+
+    stdout.close();
+    return { exitCode: 1 };
+  }
+
+  let closed = false;
+
+  const stageStdout: PipelineOutputChannel = {
+    write(data): void {
+      openedOutput.output.stdout.write(data);
+    },
+
+    close(): void {
+      if (closed) return;
+      closed = true;
+
+      try {
+        openedOutput.close();
+      } finally {
+        stdout.close();
+      }
+    },
+  };
+
   const builtin = builtins.get(command.name);
 
   if (builtin) {
     input?.resume();
 
-    try {
+    try { 
       return await builtin({
         args: command.args,
         context,
-        output: { stdout, stderr },
+        output: {
+          stdout: stageStdout,
+          stderr: openedOutput.output.stderr,
+        },
       });
     } finally {
-      stdout.close();
+      stageStdout.close();
     }
   }
 
@@ -122,11 +162,12 @@ async function runPipelineStage({
     command,
     context,
     input,
-    stdout,
-    stderr,
+    stageStdout,
+    openedOutput.output.stderr,
     children,
   );
 }
+
 
 function runExternalPipelineStage(
   command: ExpandedCommand,
@@ -186,4 +227,10 @@ function runExternalPipelineStage(
 
 function isRunning(child: ChildProcess): boolean {
   return child.exitCode === null && child.signalCode === null;
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : String(error);
 }

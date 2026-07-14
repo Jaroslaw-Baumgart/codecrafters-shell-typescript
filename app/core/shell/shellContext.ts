@@ -1,6 +1,11 @@
-export type ShellEnvironment = Readonly<
-  Record<string, string | undefined>
->;
+export interface ShellEnvironment {
+  readonly HOME?: string;
+  readonly HISTFILE?: string;
+  readonly PATH?: string;
+  readonly Path?: string;
+  readonly PATHEXT?: string;
+  readonly [name: string]: string | undefined;
+}
 
 export class ShellContext {
   private currentDirectory: string;

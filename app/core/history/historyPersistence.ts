@@ -1,9 +1,17 @@
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 
 export function readHistoryFile(path: string): string[] {
-    return readFileSync(path, "utf8")
-        .split(/\r?\n/)
-        .filter((line) => line.length > 0);
+    try {
+        return readFileSync(path, "utf8")
+            .split(/\r?\n/)
+            .filter((line) => line.length > 0);
+    } catch (error) {
+        if (isNodeError(error) && error.code === "ENOENT"){
+            return [];
+        }
+
+        throw error;
+    }
 }
 
 export function writeHistoryFile(
@@ -26,4 +34,10 @@ export function appendHistoryFile(
     if (commands.length === 0) return;
 
     appendFileSync(path, serializeHistory(commands), "utf8");
+}
+
+function isNodeError(
+    error: unknown,
+): error is NodeJS.ErrnoException {
+    return error instanceof Error;
 }

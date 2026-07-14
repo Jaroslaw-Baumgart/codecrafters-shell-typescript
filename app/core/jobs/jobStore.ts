@@ -1,11 +1,17 @@
-export type JobStatus = "Running" | "Done";
-
-export interface Job {
-  id: number;
-  pid: number;
-  command: string;
-  status: JobStatus;
+interface JobBase {
+  readonly id: number;
+  readonly pid: number;
+  readonly command: string;
 }
+
+export type Job =
+  | JobBase & {
+    readonly status: "Running";
+    }
+  | JobBase & {
+    readonly status: "Done";
+    readonly exitCode: number;
+  };
 
 export class JobStore {
   private nextJobId(): number {
@@ -18,22 +24,28 @@ export class JobStore {
   private readonly jobs = new Map<number, Job>();
 
   add(pid: number, command: string): Job {
-    const job = {
+    const job: Job = {
       id: this.nextJobId(),
       pid,
       command,
-      status: "Running" as const,
+      status: "Running",
     };
 
     this.jobs.set(job.id, job);
     return job;
   }
 
-  markDone(id: number): void {
+  markDone(id: number, exitCode: number): void {
     const job = this.jobs.get(id);
-    if (!job) return ;
+    if (!job || job.status === "Done") {
+      return;
+    }
 
-    job.status = "Done";
+    this.jobs.set(id, {
+      ...job,
+      status: "Done",
+      exitCode,
+    });
   }
 
   remove(id: number): void {

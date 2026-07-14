@@ -38,8 +38,8 @@ export function startBackgroundCommand(
 
   const job = jobs.add(child.pid, commandText(command));
 
-  child.on("exit", () => {
-    jobs.markDone(job.id);
+  child.on("exit", (exitCode) => {
+    jobs.markDone(job.id, exitCode ?? 1);
   });
 
   output.stdout.write(`[${job.id}] ${job.pid}\n`);

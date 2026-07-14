@@ -8,42 +8,53 @@ import type {
 } from "../parser/ast";
 import type { SourceSpan } from "../lexer/token";
 import type { VariableStore } from "../variables/variableStore";
+import type { ShellEnvironment } from "../shell/shellContext";
 
 export interface ExpandedRedirection {
-  stream: RedirectStream;
-  mode: RedirectMode;
-  path: string;
+  readonly stream: RedirectStream;
+  readonly mode: RedirectMode;
+  readonly path: string;
 }
 
 export interface ExpansionContext {
-  variables: VariableStore;
+  readonly variables: VariableStore;
+  readonly env: ShellEnvironment;
 }
 
 export interface ExpandedCommand {
-  name: string;
-  args: string[];
-  redirects: ExpandedRedirection[];
+  readonly name: string;
+  readonly args: readonly string[];
+  readonly redirects: readonly ExpandedRedirection[];
 }
 
 export interface ExpandedPipeline {
-  commands: ExpandedCommand[];
-  background: boolean;
+  readonly commands: readonly ExpandedCommand[];
+  readonly background: boolean;
+}
+
+export interface ExpansionDiagnostic {
+  readonly message: string;
+  readonly span: SourceSpan;
 }
 
 export interface ExpansionResult {
-  pipeline: ExpandedPipeline | null;
-  diagnostics: Array<{ message: string; span: SourceSpan }>;
+  readonly pipeline: ExpandedPipeline | null;
+  readonly diagnostics: readonly ExpansionDiagnostic[];
 }
 
 function expandWord(
   word: Word,
   context: ExpansionContext,
 ): string {
-  const value = word.parts
-    .map((part) => part.value)
-    .join("");
+  return word.parts
+    .map((part) => {
+      if (part.quote === "single" || part.escaped) {
+        return part.value;
+      }
 
-  return expandParameters(value, context.variables);
+      return expandParameters(part.value, context);
+    })
+    .join("");
 }
 
 function expandRedirection(
@@ -71,7 +82,7 @@ export function expandCommandLine(
   }
 
   const commands: ExpandedCommand[] = [];
-  const diagnostics: ExpansionResult["diagnostics"] = [];
+  const diagnostics: ExpansionDiagnostic[] = [];
 
   for (const command of pipeline.commands) {
     const expanded = expandSimpleCommand(command, context);
@@ -96,7 +107,6 @@ export function expandCommandLine(
     },
     diagnostics: [],
   };
-
 }
 
 function expandSimpleCommand(
@@ -104,7 +114,7 @@ function expandSimpleCommand(
   context: ExpansionContext,
 ): {
   command: ExpandedCommand | null;
-  diagnostics: Array<{ message: string; span: SourceSpan }>;
+  diagnostics: ExpansionDiagnostic[];
 } {
   const words: string[] = [];
   const redirects: ExpandedRedirection[] = [];
@@ -112,12 +122,7 @@ function expandSimpleCommand(
   for (const part of command.parts) {
     switch (part.type) {
       case "word": {
-        const expandedWord = expandWord(part, context);
-
-        if (expandedWord.length > 0) {
-          words.push(expandedWord);
-        }
-        
+        words.push(expandWord(part, context));
         break;
       }
 
@@ -127,7 +132,9 @@ function expandSimpleCommand(
     }
   }
 
-  if (words.length === 0) {
+  const [name, ...args] = words;
+
+  if (!name) {
     return {
       command: null,
       diagnostics: [
@@ -138,8 +145,6 @@ function expandSimpleCommand(
       ],
     };
   }
-
-  const [name, ...args] = words;
 
   return {
     command: {
@@ -153,15 +158,24 @@ function expandSimpleCommand(
 
 function expandParameters(
   value: string,
-  variables: VariableStore,
+  context: ExpansionContext,
 ): string {
   return value
     .replace(
       /\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g,
-      (_match, name: string) => variables.get(name)?.value ?? "",
+      (_match, name: string) => variableValue(name, context),
     )
     .replace(
       /\$([A-Za-z_][A-Za-z0-9_]*)/g,
-      (_match, name: string) => variables.get(name)?.value ?? "",
+      (_match, name: string) => variableValue(name, context),
     );
+}
+
+function variableValue(
+  name: string,
+  context: ExpansionContext,
+): string {
+  return context.variables.get(name)?.value
+    ?? context.env[name]
+    ?? "";
 }

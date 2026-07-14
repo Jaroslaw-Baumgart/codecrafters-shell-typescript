@@ -1,4 +1,3 @@
-import { exitCode } from "node:process";
 import type {
   BuiltinHandler,
   BuiltinInvocation,

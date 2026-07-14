@@ -10,41 +10,67 @@ export function createHistoryBuiltin(
   history: HistoryStore,
 ): BuiltinHandler {
   return ({ args, output }) => {
-    switch (args[0]) {
-      case "-r": {
-        const path = historyFilePath(args);
-        if (!path) return { exitCode: 1 };
-
-        history.addAll(readHistoryFile(path));
-        return { exitCode: 0 };
-      }
-
-      case "-w": {
-        const path = historyFilePath(args);
-        if (!path) return { exitCode: 1 };
-
-        writeHistoryFile(path, history.commands());
-        return { exitCode: 0 };
-      }
-
-      case "-a": {
-        const path = historyFilePath(args);
-        if (!path) return { exitCode: 1 };
-
-        appendHistoryFile(path, history.pendingAppendCommands());
-        history.markAppended();
-        return { exitCode: 0 };
-      }
-
-      default: {
-        const entries = selectedEntries(history, args);
-
-        for (const entry of entries) {
-          output.stdout.write(formatHistoryEntry(entry));
+    try {
+      switch (args[0]) {
+        case "-r": {
+          const path = historyFilePath(args);
+          if (!path) {
+            output.stderr.write(
+              "history: -r: missing file path\n",
+            );
+            
+            return { exitCode: 1 };
+          } 
+  
+          history.addAll(readHistoryFile(path));
+          return { exitCode: 0 };
         }
+  
+        case "-w": {
+          const path = historyFilePath(args);
+          if (!path) {
+            output.stderr.write(
+              "history: -r: missing file path\n",
+            );
+            
+            return { exitCode: 1 };
+          }
 
-        return { exitCode: 0 };
+          writeHistoryFile(path, history.commands());
+          return { exitCode: 0 };
+        }
+  
+        case "-a": {
+          const path = historyFilePath(args);
+          if (!path) {
+            output.stderr.write(
+              "history: -r: missing file path\n",
+            );
+            
+            return { exitCode: 1 };
+          }
+
+          appendHistoryFile(path, history.pendingAppendCommands());
+          history.markAppended();
+          return { exitCode: 0 };
+        }
+  
+        default: {
+          const entries = selectedEntries(history, args);
+  
+          for (const entry of entries) {
+            output.stdout.write(formatHistoryEntry(entry));
+          }
+  
+          return { exitCode: 0 };
+        }
       }
+    } catch (error) {
+      output.stderr.write(
+        `history: ${errorMessage(error)}\n`,
+      );
+
+      return { exitCode: 1 };
     }
   };
 }
@@ -74,4 +100,10 @@ function selectedEntries(
   }
 
   return history.recent(count);
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : String(error);
 }

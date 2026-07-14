@@ -1,7 +1,8 @@
 import { closeSync, openSync, writeSync } from "node:fs";
 import type { ExpandedRedirection } from "../expansion/expander";
-import type { OutputData, TerminalOutput } from "../ports";
+import type { OutputData } from "../ports";
 import type { CommandOutput, OutputChannel } from "./types";
+import { resolve } from "node:path";
 
 export interface OpenedCommandOutput {
   output: CommandOutput;
@@ -9,16 +10,21 @@ export interface OpenedCommandOutput {
 }
 
 export function openCommandOutput(
-  terminal: TerminalOutput,
+  defaultOutput: CommandOutput,
   redirects: readonly ExpandedRedirection[],
+  cwd: string,
 ): OpenedCommandOutput {
-  let stdout: OutputChannel = { write: (data) => terminal.write(data) };
-  let stderr: OutputChannel = { write: (data) => terminal.writeError(data) };
+  let stdout: OutputChannel = defaultOutput.stdout;
+  let stderr: OutputChannel = defaultOutput.stderr;
   const descriptors: number[] = [];
 
   try {
     for (const redirect of redirects) {
-      const descriptor = openSync(redirect.path, redirect.mode === "append" ? "a" : "w");
+      const path = resolve(cwd, redirect.path);
+      const descriptor = openSync(
+        path,
+        redirect.mode === "append" ? "a" : "w",
+      );
       descriptors.push(descriptor);
       const channel = fileChannel(descriptor);
       if (redirect.stream === "stdout") stdout = channel;
