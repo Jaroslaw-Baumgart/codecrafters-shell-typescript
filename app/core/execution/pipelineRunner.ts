@@ -162,8 +162,8 @@ function runExternalPipelineStage(
       input.pipe(child.stdin);
     }
 
-    child.stdout.on("data", (data: Uint8Array) => stdout.write(data));
-    child.stderr.on("data", (data: Uint8Array) => stderr.write(data));
+    child.stdout?.on("data", (data: Uint8Array) => stdout.write(data));
+    child.stderr?.on("data", (data: Uint8Array) => stderr.write(data));
 
     let settled = false;
     const finish = (result: ExecutionResult): void => {
