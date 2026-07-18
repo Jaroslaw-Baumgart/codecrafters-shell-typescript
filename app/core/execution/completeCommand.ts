@@ -17,7 +17,7 @@ export function createCompleteBuiltin(
         return printCompletion(completionSpecs, invocation);
 
       case "-r":
-        return  unregisterCompletion(completionSpecs, invocation);
+        return unregisterCompletion(completionSpecs, invocation);
 
       default:
         return { exitCode: 0 };
@@ -54,9 +54,7 @@ function printCompletion(
   const formatted = completionSpecs.format(command);
 
   if (!formatted) {
-    output.stdout.write(
-      `complete: ${command}: no completion specification\n`,
-    );
+    output.stdout.write(`complete: ${command}: no completion specification\n`);
 
     return { exitCode: 1 };
   }

@@ -5,13 +5,13 @@ interface JobBase {
 }
 
 export type Job =
-  | JobBase & {
-    readonly status: "Running";
-    }
-  | JobBase & {
-    readonly status: "Done";
-    readonly exitCode: number;
-  };
+  | (JobBase & {
+      readonly status: "Running";
+    })
+  | (JobBase & {
+      readonly status: "Done";
+      readonly exitCode: number;
+    });
 
 export class JobStore {
   private nextJobId(): number {

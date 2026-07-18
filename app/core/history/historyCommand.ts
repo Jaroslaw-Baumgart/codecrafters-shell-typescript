@@ -6,47 +6,39 @@ import {
   writeHistoryFile,
 } from "./historyPersistence";
 
-export function createHistoryBuiltin(
-  history: HistoryStore,
-): BuiltinHandler {
+export function createHistoryBuiltin(history: HistoryStore): BuiltinHandler {
   return ({ args, output }) => {
     try {
       switch (args[0]) {
         case "-r": {
           const path = historyFilePath(args);
           if (!path) {
-            output.stderr.write(
-              "history: -r: missing file path\n",
-            );
-            
+            output.stderr.write("history: -r: missing file path\n");
+
             return { exitCode: 1 };
-          } 
-  
+          }
+
           history.addAll(readHistoryFile(path));
           return { exitCode: 0 };
         }
-  
+
         case "-w": {
           const path = historyFilePath(args);
           if (!path) {
-            output.stderr.write(
-              "history: -r: missing file path\n",
-            );
-            
+            output.stderr.write("history: -r: missing file path\n");
+
             return { exitCode: 1 };
           }
 
           writeHistoryFile(path, history.commands());
           return { exitCode: 0 };
         }
-  
+
         case "-a": {
           const path = historyFilePath(args);
           if (!path) {
-            output.stderr.write(
-              "history: -r: missing file path\n",
-            );
-            
+            output.stderr.write("history: -r: missing file path\n");
+
             return { exitCode: 1 };
           }
 
@@ -54,21 +46,19 @@ export function createHistoryBuiltin(
           history.markAppended();
           return { exitCode: 0 };
         }
-  
+
         default: {
           const entries = selectedEntries(history, args);
-  
+
           for (const entry of entries) {
             output.stdout.write(formatHistoryEntry(entry));
           }
-  
+
           return { exitCode: 0 };
         }
       }
     } catch (error) {
-      output.stderr.write(
-        `history: ${errorMessage(error)}\n`,
-      );
+      output.stderr.write(`history: ${errorMessage(error)}\n`);
 
       return { exitCode: 1 };
     }
@@ -103,7 +93,5 @@ function selectedEntries(
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : String(error);
+  return error instanceof Error ? error.message : String(error);
 }

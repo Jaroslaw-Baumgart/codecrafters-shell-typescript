@@ -21,10 +21,7 @@ export function openCommandOutput(
   try {
     for (const redirect of redirects) {
       const path = resolve(cwd, redirect.path);
-      const descriptor = openSync(
-        path,
-        redirect.mode === "append" ? "a" : "w",
-      );
+      const descriptor = openSync(path, redirect.mode === "append" ? "a" : "w");
       descriptors.push(descriptor);
       const channel = fileChannel(descriptor);
       if (redirect.stream === "stdout") stdout = channel;

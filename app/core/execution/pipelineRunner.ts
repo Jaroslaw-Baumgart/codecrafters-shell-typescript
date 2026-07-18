@@ -44,9 +44,10 @@ export async function runPipeline(
 
   const tasks = pipeline.commands.map((command, index) => {
     const input = index === 0 ? null : links[index - 1];
-    const stdout = index === pipeline.commands.length - 1
-      ? terminalOutput(output.stdout)
-      : streamOutput(links[index]);
+    const stdout =
+      index === pipeline.commands.length - 1
+        ? terminalOutput(output.stdout)
+        : streamOutput(links[index]);
 
     return runPipelineStage({
       command,
@@ -112,9 +113,7 @@ async function runPipelineStage({
       context.cwd,
     );
   } catch (error) {
-    stderr.write(
-      `${command.name}: ${errorMessage(error)}\n`,
-    );
+    stderr.write(`${command.name}: ${errorMessage(error)}\n`);
 
     stdout.close();
     return { exitCode: 1 };
@@ -144,7 +143,7 @@ async function runPipelineStage({
   if (builtin) {
     input?.resume();
 
-    try { 
+    try {
       return await builtin({
         args: command.args,
         context,
@@ -167,7 +166,6 @@ async function runPipelineStage({
     children,
   );
 }
-
 
 function runExternalPipelineStage(
   command: ExpandedCommand,
@@ -230,7 +228,5 @@ function isRunning(child: ChildProcess): boolean {
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : String(error);
+  return error instanceof Error ? error.message : String(error);
 }

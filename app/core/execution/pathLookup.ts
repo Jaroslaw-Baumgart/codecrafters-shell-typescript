@@ -17,14 +17,18 @@ export function findExecutable(
 
   if (containsPathSeparator(command)) {
     const path = isAbsolute(command) ? command : resolve(context.cwd, command);
-    return executableCandidates(path, extensions).find((item) => isExecutable(item, extensions))
-      ?? null;
+    return (
+      executableCandidates(path, extensions).find((item) =>
+        isExecutable(item, extensions),
+      ) ?? null
+    );
   }
 
   for (const directory of pathDirectories(context)) {
     const path = resolve(directory, command);
-    const candidate = executableCandidates(path, extensions)
-      .find((item) => isExecutable(item, extensions));
+    const candidate = executableCandidates(path, extensions).find((item) =>
+      isExecutable(item, extensions),
+    );
     if (candidate) return candidate;
   }
   return null;
@@ -58,17 +62,23 @@ export function findExecutableNames(
 function pathDirectories(context: PathLookupContext): string[] {
   const path = context.env.PATH ?? context.env.Path;
   if (path === undefined) return [];
-  return path.split(delimiter).map((directory) => resolve(context.cwd, directory || "."));
+  return path
+    .split(delimiter)
+    .map((directory) => resolve(context.cwd, directory || "."));
 }
 
 function containsPathSeparator(value: string): boolean {
   return value.includes("/") || value.includes(sep);
 }
 
-function executableExtensions(context: PathLookupContext): ReadonlySet<string> | null {
+function executableExtensions(
+  context: PathLookupContext,
+): ReadonlySet<string> | null {
   if (platform !== "win32") return null;
   const pathExt = context.env.PATHEXT ?? ".COM;.EXE;.BAT;.CMD";
-  return new Set(pathExt.split(";").map((extension) => extension.toUpperCase()));
+  return new Set(
+    pathExt.split(";").map((extension) => extension.toUpperCase()),
+  );
 }
 
 function executableCandidates(
@@ -84,7 +94,8 @@ function isExecutable(
   extensions: ReadonlySet<string> | null,
 ): boolean {
   try {
-    if (extensions && !extensions.has(extname(path).toUpperCase())) return false;
+    if (extensions && !extensions.has(extname(path).toUpperCase()))
+      return false;
     if (!statSync(path).isFile()) return false;
     if (!extensions) accessSync(path, constants.X_OK);
     return true;

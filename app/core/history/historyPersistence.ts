@@ -1,43 +1,39 @@
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 
 export function readHistoryFile(path: string): string[] {
-    try {
-        return readFileSync(path, "utf8")
-            .split(/\r?\n/)
-            .filter((line) => line.length > 0);
-    } catch (error) {
-        if (isNodeError(error) && error.code === "ENOENT"){
-            return [];
-        }
-
-        throw error;
+  try {
+    return readFileSync(path, "utf8")
+      .split(/\r?\n/)
+      .filter((line) => line.length > 0);
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") {
+      return [];
     }
+
+    throw error;
+  }
 }
 
 export function writeHistoryFile(
-    path: string,
-    commands: readonly string[],
+  path: string,
+  commands: readonly string[],
 ): void {
   writeFileSync(path, serializeHistory(commands), "utf8");
 }
 
 function serializeHistory(commands: readonly string[]): string {
-    return commands.length === 0
-        ? ""
-        : `${commands.join("\n")}\n`;
+  return commands.length === 0 ? "" : `${commands.join("\n")}\n`;
 }
 
 export function appendHistoryFile(
-    path: string,
-    commands: readonly string[],
+  path: string,
+  commands: readonly string[],
 ): void {
-    if (commands.length === 0) return;
+  if (commands.length === 0) return;
 
-    appendFileSync(path, serializeHistory(commands), "utf8");
+  appendFileSync(path, serializeHistory(commands), "utf8");
 }
 
-function isNodeError(
-    error: unknown,
-): error is NodeJS.ErrnoException {
-    return error instanceof Error;
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error;
 }

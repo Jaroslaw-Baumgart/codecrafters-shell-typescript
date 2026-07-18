@@ -67,8 +67,6 @@ export function parseShell(tokens: readonly Token[]): ParserResult {
   };
 }
 
-
-
 function toWord(token: WordToken): Word {
   return { type: "word", parts: [...token.parts], span: { ...token.span } };
 }

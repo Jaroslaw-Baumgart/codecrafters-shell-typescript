@@ -50,7 +50,10 @@ function argumentSource(
   completionSpecs: CompletionSpecStore,
   shellContext: ShellContext,
 ): CompletionSource {
-  const programmable = programmableCompletionSource(completionSpecs, shellContext);
+  const programmable = programmableCompletionSource(
+    completionSpecs,
+    shellContext,
+  );
   const filename = filenameSource(shellContext);
 
   return (context) => {

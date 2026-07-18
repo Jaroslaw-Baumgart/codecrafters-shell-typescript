@@ -43,7 +43,9 @@ export type Complete = (
   cursor?: number,
 ) => Promise<CompletionResult>;
 
-export function createCompletion(sources: readonly CompletionSource[]): Complete {
+export function createCompletion(
+  sources: readonly CompletionSource[],
+): Complete {
   let lastAmbiguousKey: string | null = null;
 
   return async (line, cursor = line.length) => {
@@ -53,10 +55,7 @@ export function createCompletion(sources: readonly CompletionSource[]): Complete
       sources.map((source) => source(context)),
     );
 
-    const candidates = normalizeCandidates(
-      context,
-      sourceResults.flat(),
-    );
+    const candidates = normalizeCandidates(context, sourceResults.flat());
 
     if (candidates.length === 0) {
       lastAmbiguousKey = null;
@@ -68,14 +67,20 @@ export function createCompletion(sources: readonly CompletionSource[]): Complete
       const candidate = candidates[0];
       return result(
         context,
-        formatValue(candidate.insertText, context.quoteMode, true) + candidate.suffix,
+        formatValue(candidate.insertText, context.quoteMode, true) +
+          candidate.suffix,
       );
     }
 
-    const commonPrefix = longestCommonPrefix(candidates.map((item) => item.insertText));
+    const commonPrefix = longestCommonPrefix(
+      candidates.map((item) => item.insertText),
+    );
     if (commonPrefix.length > context.prefix.length) {
       lastAmbiguousKey = null;
-      return result(context, formatValue(commonPrefix, context.quoteMode, false));
+      return result(
+        context,
+        formatValue(commonPrefix, context.quoteMode, false),
+      );
     }
 
     const key = `${line}\u0001${cursor}\u0001${candidates.map((item) => item.insertText).join("\u0000")}`;
@@ -92,9 +97,7 @@ export function createCompletion(sources: readonly CompletionSource[]): Complete
 }
 
 function wordTokens(tokens: readonly Token[]): WordToken[] {
-  return tokens.filter(
-    (token): token is WordToken => token.type === "word",
-  );
+  return tokens.filter((token): token is WordToken => token.type === "word");
 }
 
 function wordValues(words: readonly WordToken[]): string[] {
@@ -161,7 +164,10 @@ function findTarget(
   return wordIndex === 0 ? "command" : "argument";
 }
 
-function findActiveWord(tokens: readonly Token[], cursor: number): WordToken | null {
+function findActiveWord(
+  tokens: readonly Token[],
+  cursor: number,
+): WordToken | null {
   const token = tokens[tokens.length - 1];
   return token?.type === "word" && token.span.end === cursor ? token : null;
 }
@@ -176,11 +182,16 @@ function normalizeCandidates(
 ): CompletionCandidate[] {
   const unique = new Map<string, CompletionCandidate>();
   for (const candidate of candidates) {
-    if (candidate.insertText.startsWith(context.prefix) && !unique.has(candidate.insertText)) {
+    if (
+      candidate.insertText.startsWith(context.prefix) &&
+      !unique.has(candidate.insertText)
+    ) {
       unique.set(candidate.insertText, candidate);
     }
   }
-  return [...unique.values()].sort((a, b) => a.insertText.localeCompare(b.insertText));
+  return [...unique.values()].sort((a, b) =>
+    a.insertText.localeCompare(b.insertText),
+  );
 }
 
 function result(
@@ -188,7 +199,12 @@ function result(
   replacement: string | null,
   bell = false,
 ): CompletionResult {
-  return { replacement, replaceText: context.replaceText, bell, displayCandidates: [] };
+  return {
+    replacement,
+    replaceText: context.replaceText,
+    bell,
+    displayCandidates: [],
+  };
 }
 
 function longestCommonPrefix(values: readonly string[]): string {
@@ -199,7 +215,11 @@ function longestCommonPrefix(values: readonly string[]): string {
   return prefix;
 }
 
-function formatValue(value: string, quote: QuoteMode, closeQuote: boolean): string {
+function formatValue(
+  value: string,
+  quote: QuoteMode,
+  closeQuote: boolean,
+): string {
   if (quote === "single") {
     return `'${value.replaceAll("'", "'\\''")}${closeQuote ? "'" : ""}`;
   }

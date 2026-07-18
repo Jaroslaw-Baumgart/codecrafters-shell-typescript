@@ -4,10 +4,7 @@ interface JobOutput {
   write(data: string): void;
 }
 
-export function reportJobs(
-  jobs: JobStore,
-  output: JobOutput,
-): void {
+export function reportJobs(jobs: JobStore, output: JobOutput): void {
   const entries = jobs.list();
 
   for (const job of entries) {
@@ -17,10 +14,7 @@ export function reportJobs(
   removeDoneJobs(jobs, entries);
 }
 
-export function reportDoneJobs(
-  jobs: JobStore,
-  output: JobOutput,
-): void {
+export function reportDoneJobs(jobs: JobStore, output: JobOutput): void {
   const entries = jobs.list();
   const doneJobs = entries.filter((job) => job.status === "Done");
 
@@ -31,10 +25,7 @@ export function reportDoneJobs(
   removeDoneJobs(jobs, doneJobs);
 }
 
-function removeDoneJobs(
-  jobs: JobStore,
-  entries: readonly Job[],
-): void {
+function removeDoneJobs(jobs: JobStore, entries: readonly Job[]): void {
   for (const job of entries) {
     if (job.status === "Done") {
       jobs.remove(job.id);
@@ -52,9 +43,7 @@ function markerFor(job: Job, jobs: readonly Job[]): string {
 }
 
 function formatJob(job: Job, marker: string): string {
-  const command = job.status === "Running"
-    ? `${job.command} &`
-    : job.command;
+  const command = job.status === "Running" ? `${job.command} &` : job.command;
 
   return `[${job.id}]${marker}  ${job.status.padEnd(24)}${command}\n`;
 }

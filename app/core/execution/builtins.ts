@@ -57,9 +57,7 @@ function exitBuiltin({
   }
 
   if (!/^-?\d+$/.test(argument)) {
-    output.stderr.write(
-      `exit: ${argument}: numeric argument required\n`,
-    );
+    output.stderr.write(`exit: ${argument}: numeric argument required\n`);
 
     context.requestExit(2);
     return { exitCode: 2 };
@@ -72,18 +70,12 @@ function exitBuiltin({
   return { exitCode };
 }
 
-function echoBuiltin({
-  args,
-  output,
-}: BuiltinInvocation): ExecutionResult {
+function echoBuiltin({ args, output }: BuiltinInvocation): ExecutionResult {
   output.stdout.write(`${args.join(" ")}\n`);
   return { exitCode: 0 };
 }
 
-function pwdBuiltin({
-  context,
-  output,
-}: BuiltinInvocation): ExecutionResult {
+function pwdBuiltin({ context, output }: BuiltinInvocation): ExecutionResult {
   output.stdout.write(`${context.cwd}\n`);
   return { exitCode: 0 };
 }
@@ -97,8 +89,7 @@ function cdBuiltin({
   const homeDirectory = context.env.HOME;
 
   const target =
-    requestedDirectory === undefined ||
-    requestedDirectory === "~"
+    requestedDirectory === undefined || requestedDirectory === "~"
       ? homeDirectory
       : requestedDirectory;
 
@@ -117,17 +108,13 @@ function cdBuiltin({
     context.changeDirectory(absolutePath);
     return { exitCode: 0 };
   } catch {
-    output.stderr.write(
-      `cd: ${target}: No such file or directory\n`,
-    );
+    output.stderr.write(`cd: ${target}: No such file or directory\n`);
 
     return { exitCode: 1 };
   }
 }
 
-function createTypeBuiltin(
-  builtins: BuiltinRegistry,
-): BuiltinHandler {
+function createTypeBuiltin(builtins: BuiltinRegistry): BuiltinHandler {
   return ({ args, context, output }) => {
     const name = args[0];
 
@@ -137,9 +124,7 @@ function createTypeBuiltin(
     }
 
     if (builtins.has(name)) {
-      output.stdout.write(
-        `${name} is a shell builtin\n`,
-      );
+      output.stdout.write(`${name} is a shell builtin\n`);
 
       return { exitCode: 0 };
     }
@@ -147,9 +132,7 @@ function createTypeBuiltin(
     const executable = findExecutable(name, context);
 
     if (executable) {
-      output.stdout.write(
-        `${name} is ${executable}\n`,
-      );
+      output.stdout.write(`${name} is ${executable}\n`);
 
       return { exitCode: 0 };
     }

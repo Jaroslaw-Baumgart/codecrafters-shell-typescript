@@ -6,9 +6,7 @@ import type {
 
 import type { VariableStore } from "./variableStore";
 
-export function createDeclareBuiltin(
-  variables: VariableStore,
-): BuiltinHandler {
+export function createDeclareBuiltin(variables: VariableStore): BuiltinHandler {
   return (invocation) => declareBuiltin(invocation, variables);
 }
 
@@ -31,9 +29,7 @@ function declareBuiltin(
       return { exitCode: 1 };
     }
 
-    output.stdout.write(
-      `declare -- ${variable.name}="${variable.value}"\n`,
-    );
+    output.stdout.write(`declare -- ${variable.name}="${variable.value}"\n`);
 
     return { exitCode: 0 };
   }

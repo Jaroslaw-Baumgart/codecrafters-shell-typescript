@@ -21,9 +21,8 @@ export class NodeTerminal implements Terminal {
             void this.completeLine(line)
               .then((result) => callback(null, result))
               .catch((error: unknown) => {
-                const completionError = error instanceof Error
-                  ? error
-                  : new Error(String(error));
+                const completionError =
+                  error instanceof Error ? error : new Error(String(error));
 
                 callback(completionError, [[], line]);
               });
@@ -72,10 +71,15 @@ export class NodeTerminal implements Terminal {
   private toReadlineResult(result: CompletionResult): ReadlineResult {
     if (result.bell) this.bell();
     if (result.displayCandidates.length > 0) {
-      const names = result.displayCandidates.map((item) => item.displayText).join("  ");
+      const names = result.displayCandidates
+        .map((item) => item.displayText)
+        .join("  ");
       this.write(`\n${names}\n`);
       this.readline.prompt(true);
     }
-    return [result.replacement === null ? [] : [result.replacement], result.replaceText];
+    return [
+      result.replacement === null ? [] : [result.replacement],
+      result.replaceText,
+    ];
   }
 }

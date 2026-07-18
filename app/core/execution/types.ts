@@ -25,10 +25,7 @@ export type BuiltinHandler = (
   invocation: BuiltinInvocation,
 ) => ExecutionResult | Promise<ExecutionResult>;
 
-export type BuiltinRegistry = ReadonlyMap<
-  string,
-  BuiltinHandler
->;
+export type BuiltinRegistry = ReadonlyMap<string, BuiltinHandler>;
 
 export type RunExternalCommand = (
   command: ExpandedCommand,

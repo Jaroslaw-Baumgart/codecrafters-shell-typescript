@@ -57,9 +57,10 @@ export function createShell({
     terminal,
     execute,
     variables,
-    () => reportDoneJobs(jobs, {
-      write: (data) => terminal.write(data),
-    }),
+    () =>
+      reportDoneJobs(jobs, {
+        write: (data) => terminal.write(data),
+      }),
     (line) => history.add(line),
     () => {
       if (!historyFile) return;

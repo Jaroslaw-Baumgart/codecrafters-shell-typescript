@@ -27,9 +27,7 @@ export function startBackgroundCommand(
   });
 
   if (!child.pid) {
-    output.stderr.write(
-      `${command.name}: failed to start process\n`,
-    );
+    output.stderr.write(`${command.name}: failed to start process\n`);
     return { exitCode: 1 };
   }
 

@@ -64,11 +64,7 @@ function runCompleter(
 }
 
 function completerArgs(context: CompletionContext): string[] {
-  return [
-    context.commandName ?? "",
-    context.prefix,
-    previousWord(context),
-  ];
+  return [context.commandName ?? "", context.prefix, previousWord(context)];
 }
 
 function previousWord(context: CompletionContext): string {

@@ -42,10 +42,7 @@ export interface ExpansionResult {
   readonly diagnostics: readonly ExpansionDiagnostic[];
 }
 
-function expandWord(
-  word: Word,
-  context: ExpansionContext,
-): string {
+function expandWord(word: Word, context: ExpansionContext): string {
   return word.parts
     .map((part) => {
       if (part.quote === "single" || part.escaped) {
@@ -156,26 +153,16 @@ function expandSimpleCommand(
   };
 }
 
-function expandParameters(
-  value: string,
-  context: ExpansionContext,
-): string {
+function expandParameters(value: string, context: ExpansionContext): string {
   return value
-    .replace(
-      /\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g,
-      (_match, name: string) => variableValue(name, context),
+    .replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (_match, name: string) =>
+      variableValue(name, context),
     )
-    .replace(
-      /\$([A-Za-z_][A-Za-z0-9_]*)/g,
-      (_match, name: string) => variableValue(name, context),
+    .replace(/\$([A-Za-z_][A-Za-z0-9_]*)/g, (_match, name: string) =>
+      variableValue(name, context),
     );
 }
 
-function variableValue(
-  name: string,
-  context: ExpansionContext,
-): string {
-  return context.variables.get(name)?.value
-    ?? context.env[name]
-    ?? "";
+function variableValue(name: string, context: ExpansionContext): string {
+  return context.variables.get(name)?.value ?? context.env[name] ?? "";
 }

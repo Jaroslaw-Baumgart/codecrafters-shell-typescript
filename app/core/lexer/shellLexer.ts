@@ -7,14 +7,14 @@ import {
   type WordPart,
 } from "./token";
 
-type QuoteState = 
+type QuoteState =
   | {
-    mode: "unquoted";
+      mode: "unquoted";
     }
   | {
-    mode: "single" | "double";
-    start: number;
-  };
+      mode: "single" | "double";
+      start: number;
+    };
 
 export interface ShellLexerOptions {
   tolerateIncomplete?: boolean;
@@ -67,15 +67,13 @@ export function lexShell(
     parts = [];
   };
 
-  const openQuote = (
-    mode: Exclude<QuoteMode, "unquoted">
-  ): QuoteState => {
+  const openQuote = (mode: Exclude<QuoteMode, "unquoted">): QuoteState => {
     const start = index;
 
     wordStart ??= index;
     append("", mode, false, index + 1, index + 1);
     index++;
-    
+
     return {
       mode,
       start,
@@ -93,13 +91,7 @@ export function lexShell(
 
         index++;
       } else {
-        append(
-          character,
-          "single",
-          false,
-          index,
-          index + 1
-        );
+        append(character, "single", false, index, index + 1);
 
         index++;
       }
@@ -177,7 +169,7 @@ export function lexShell(
     }
 
     const redirect = matchRedirect(input, index, wordStart !== null);
-    
+
     if (redirect) {
       finishWord(index);
       tokens.push({
@@ -194,15 +186,12 @@ export function lexShell(
   }
 
   finishWord(input.length);
-  if (
-    quoteState.mode !== "unquoted" &&
-    !options.tolerateIncomplete
-  ) {
+  if (quoteState.mode !== "unquoted" && !options.tolerateIncomplete) {
     diagnostics.push({
       message: `Unclosed ${quoteState.mode} quote`,
       span: {
         start: quoteState.start,
-        end: input.length 
+        end: input.length,
       },
     });
   }
@@ -210,7 +199,7 @@ export function lexShell(
   return {
     tokens,
     diagnostics,
-    finalQuoteMode: quoteState.mode
+    finalQuoteMode: quoteState.mode,
   };
 }
 
@@ -219,8 +208,11 @@ function matchRedirect(
   index: number,
   wordStarted: boolean,
 ): RedirectOperator | null {
-  return REDIRECT_OPERATORS.find(
-    (operator) =>
-      (!wordStarted || operator.startsWith(">")) && input.startsWith(operator, index),
-  ) ?? null;
+  return (
+    REDIRECT_OPERATORS.find(
+      (operator) =>
+        (!wordStarted || operator.startsWith(">")) &&
+        input.startsWith(operator, index),
+    ) ?? null
+  );
 }

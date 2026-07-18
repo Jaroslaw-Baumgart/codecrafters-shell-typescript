@@ -31,7 +31,6 @@ export function createExecutor(
 
     if (pipeline.commands.length > 1) {
       terminal.pauseInput();
-    
 
       try {
         const result = await runPipeline(
@@ -92,11 +91,7 @@ export function createExecutor(
         terminal.pauseInput();
 
         try {
-          result = await runExternal(
-            command,
-            context,
-            openedOutput.output,
-          );
+          result = await runExternal(command, context, openedOutput.output);
         } finally {
           terminal.resumeInput();
         }
@@ -124,7 +119,5 @@ function finishExecution(
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : String(error);
+  return error instanceof Error ? error.message : String(error);
 }
