@@ -2,86 +2,39 @@
 
 [![CodeCrafters progress](https://backend.codecrafters.io/progress/shell/db477fc1-c743-4e48-bbc9-60415b39afa2)](https://app.codecrafters.io/users/Jaroslaw-Baumgart?r=2qF)
 
-A small Unix-like command shell implemented from scratch in TypeScript. The
-project was created as part of the
-[CodeCrafters "Build Your Own Shell" challenge](https://app.codecrafters.io/courses/shell/overview)
-and then extended with a modular architecture, command completion, persistent
-history, variables, pipelines, redirection, and background jobs.
+A Unix-like command shell built from scratch in TypeScript. It turns raw command-line input into tokens and a typed abstract syntax tree, performs variable expansion, and executes built-in or external commands.
 
-The goal is educational: to explore how command-line input is tokenized,
-parsed, expanded, and ultimately executed as a built-in command or child
-process.
+The project started as the [CodeCrafters "Build Your Own Shell" challenge](https://app.codecrafters.io/courses/shell/overview) and grew into a modular exploration of parsing, process execution, terminal I/O, and shell state management.
 
-## Features
+## Highlights
 
-- Interactive REPL built on Node's readline API
-- Lexer supporting single quotes, double quotes, and escaped characters
-- Parser producing a typed command and pipeline AST
-- External command lookup through `PATH`
-- Built-ins: `cd`, `pwd`, `echo`, `exit`, `type`, `history`, `jobs`, `declare`, and `complete`
-- Pipelines between built-in and external commands
-- Standard output and error redirection with overwrite and append modes
-- Background execution and basic job reporting
-- Shell variables and environment-variable expansion
-- Persistent command history through `HISTFILE`
-- Filename, executable, built-in, and programmable completion
-- Cross-platform executable lookup, including Windows `PATHEXT` support
+| Area | Supported behavior |
+| --- | --- |
+| Parsing | Quoted strings, escaped characters, pipelines, redirects, and background operators |
+| Execution | Built-in commands, external programs discovered through `PATH`, and multi-stage pipelines |
+| Redirection | Standard output and standard error with overwrite and append modes |
+| Shell state | Variables, environment expansion, command history, and background jobs |
+| Completion | Built-ins, executables, filenames, and programmable completers |
+| Portability | Unix executable lookup and Windows `PATHEXT` support |
 
-## Architecture
+Built-in commands: `cd`, `pwd`, `echo`, `exit`, `type`, `history`, `jobs`, `declare`, and `complete`.
 
-Command processing is split into focused stages:
+## Quick start
 
-```text
-User input
-    |
-    v
-Lexer -> Tokens -> Parser -> AST -> Expansion -> Executor
-                                                |       |
-                                                |       +-> External process
-                                                +----------> Built-in command
-```
-
-The source code is organized around these responsibilities:
-
-```text
-app/
-|-- adapters/              Terminal integration
-|-- core/
-|   |-- completion/        Completion sources and specifications
-|   |-- execution/         Built-ins, processes, pipelines, and redirects
-|   |-- expansion/         Variable and word expansion
-|   |-- history/           In-memory and persistent command history
-|   |-- jobs/              Background job state and reporting
-|   |-- lexer/             Input tokenization
-|   |-- parser/            AST construction
-|   |-- shell/             Shell lifecycle and shared context
-|   `-- variables/         Shell variable storage
-`-- main.ts                Application entry point
-```
-
-The core communicates with the terminal through small TypeScript interfaces.
-Process execution and terminal behavior are kept outside the parsing logic,
-which makes individual stages easier to understand and test independently.
-
-## Requirements
+### Requirements
 
 - [Bun](https://bun.sh/) 1.3 or newer
 
-## Running locally
-
-Install dependencies:
+### Install and run
 
 ```sh
+git clone https://github.com/Jaroslaw-Baumgart/codecrafters-shell-typescript.git
+cd codecrafters-shell-typescript
 bun install
-```
-
-Start the shell:
-
-```sh
 bun run dev
 ```
 
-On a Unix-like system, the CodeCrafters launcher can also be used:
+On Unix-like systems, the included launcher is also available:
 
 ```sh
 ./your_program.sh
@@ -105,32 +58,86 @@ $ jobs
 [1]+  Running                 sleep 2 &
 ```
 
-Exact external commands and output may differ between operating systems.
+External commands and their output depend on the operating system.
 
-## Design highlights
+## How it works
 
-- Discriminated unions model lexer tokens, AST nodes, quote state, and job state.
-- `Map` and `Set` provide explicit registries and deduplication for built-ins,
-  jobs, variables, completion specifications, and executable names.
-- Immutable public command models prevent execution stages from accidentally
-  changing parsed and expanded input.
-- Dependency injection at process and terminal boundaries keeps the shell core
-  decoupled from Node-specific I/O.
-- Source spans are retained through lexing and parsing to support useful syntax
-  diagnostics.
+Each command passes through a focused processing pipeline:
 
-## Known limitations
+```text
+                    +-------------------+
+                    |  Shell variables  |
+                    |  and environment  |
+                    +---------+---------+
+                              |
+                              v
+Input -> Lexer -> Tokens -> Parser -> AST -> Expander -> Executor
+                                                        |      |
+                                                        |      +-> Built-in
+                                                        |
+                                                        +--------> Child process
+```
 
-This project implements a deliberately selected subset of shell behavior and is
-not intended to replace Bash, Zsh, or another POSIX shell. It does not currently
-provide the complete POSIX grammar, command substitution, glob expansion, input
-redirection, logical operators such as `&&` and `||`, or full process-group and
-signal-based job control.
+- The **lexer** preserves quote and escape information while producing tokens with source spans.
+- The **parser** builds a typed AST for commands, pipelines, redirects, and background execution.
+- The **expander** resolves shell and environment variables without expanding single-quoted or escaped text.
+- The **executor** routes commands to built-ins or child processes and connects pipeline stages and output streams.
+- The **shell layer** owns the interactive lifecycle and coordinates history, completion, jobs, and shared context.
+
+## Project structure
+
+```text
+app/
+|-- adapters/              Node terminal integration
+|-- core/
+|   |-- completion/        Completion engine and candidate sources
+|   |-- execution/         Built-ins, processes, pipelines, and redirects
+|   |-- expansion/         Variable and word expansion
+|   |-- history/           In-memory and persistent command history
+|   |-- jobs/              Background job storage and reporting
+|   |-- lexer/             Input tokenization and diagnostics
+|   |-- parser/            AST definitions and construction
+|   |-- shell/             Shell lifecycle and shared context
+|   `-- variables/         Shell variable storage
+`-- main.ts                Application entry point
+```
+
+The core depends on small TypeScript ports instead of terminal implementation details. This keeps parsing and execution concerns separate from Node-specific I/O and makes individual stages independently testable.
+
+## Testing
+
+Run the test suite with:
+
+```sh
+bun test
+```
+
+The tests currently cover lexer behavior and expansion rules, including quoting, escaping, empty arguments, environment variables, shell-variable precedence, pipelines, and redirects.
+
+## Engineering decisions
+
+- Discriminated unions model tokens, AST nodes, quote modes, redirects, and job states.
+- Read-only command models protect parsed and expanded data from mutation during execution.
+- `Map` and `Set` provide explicit registries for built-ins, jobs, variables, completion specifications, and executable names.
+- Dependency injection at terminal and execution boundaries keeps the shell core decoupled from platform-specific I/O.
+- Source spans flow through lexing and parsing to produce precise syntax diagnostics.
+- The project uses strict TypeScript checks, including unused-symbol and implicit-return validation.
+
+## Current scope
+
+This shell intentionally implements a practical subset of shell behavior rather than the complete POSIX specification. It does not currently support:
+
+- command substitution;
+- glob expansion;
+- input redirection;
+- logical operators such as `&&` and `||`;
+- full process-group and signal-based job control.
+
+It is an educational implementation and should not be used as a replacement for Bash, Zsh, or another production shell.
 
 ## CodeCrafters
 
-The project follows the CodeCrafters shell challenge and can be submitted to
-its remote test suite with:
+The project can be submitted to the CodeCrafters remote test suite with:
 
 ```sh
 codecrafters submit
