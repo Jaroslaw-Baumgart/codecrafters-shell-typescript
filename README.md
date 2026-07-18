@@ -142,3 +142,7 @@ The project can be submitted to the CodeCrafters remote test suite with:
 ```sh
 codecrafters submit
 ```
+## Contact
+
+- GitHub: [Jaroslaw-Baumgart](https://github.com/Jaroslaw-Baumgart)
+- Email: [jaroslawbaumgart@gmail.com](mailto:jaroslawbaumgart@gmail.com)
